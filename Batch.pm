@@ -673,7 +673,7 @@ use DynaLoader;
         IS_POST_ERR
         IS_POST_FINISH
 );
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 sub AUTOLOAD {
   # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -1146,9 +1146,27 @@ Corporation's Load Sharing Facility (LSF) Batch product.
   $numreserve = $user->numReserveJobs;
   $cpu = $user->histCpuTime;
 
+  open LOG, "/usr/local/lsf/work/clustername/logdir/lsb.events";
+
+  $line = 1;
+  while( $er = $b->geteventrec( LOG, $line)){
+    $el = $er->eventLog;
+    $lt = localtime $er->eventTime;
+    print "event $line at $lt:";
+    if( $er->type == EVENT_JOB_NEW ){
+       $id = $el->jobId;
+       $user = $el->userName;
+       $res = $el->resReq;
+       $q = $el->queue;
+       print "New job $job submitted to queue $q by $user\n";
+    }
+    ...
+    else{
+       print "Received event of type ", $er->type, "\n";
+    }
+
   #NOT YET IMPLEMENTED:
 
-  $batch->geteventrec(...);
   $batch->pendreason(...);
   $batch->suspreason(...);
 
@@ -1158,7 +1176,7 @@ Corporation's Load Sharing Facility (LSF) Batch product.
 LSF Batch provides access to batch queueing services across
 a cluster of machines. 
 
-This library is designed to be used with LSF version 3.2. Please see
+This library is designed to be used with LSF version 4.x. Please see
 the "LSF Programmer's guide" and the LSF man pages for detailed
 documentation of this API.
 
@@ -1822,7 +1840,7 @@ in the documentation.
 
 =head1 AUTHOR
 
-Paul Franceus, RABA Technologies, Inc., paul@raba.com
+Paul Franceus, Capita Technologies, Inc., paul@capita.com
 
 =head1 SEE ALSO
 

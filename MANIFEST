@@ -10,3 +10,5 @@ Makefile.PL
 README
 test.pl
 typemap
+ppport.h
+makexs.pl

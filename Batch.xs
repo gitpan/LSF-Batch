@@ -7,6 +7,7 @@ extern "C" {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "ppport.h"
 #include "Av_CharPtrPtr.h"  /* XS_*_charPtrPtr() */
 #include "Av_IntPtr.h"  /* XS_*_intPtr() */
 #include <lsf/lsf.h>
@@ -16,8 +17,12 @@ extern "C" {
 }
 #endif
 
-#define SET_LSB_ERRMSG sv_setpv(GvSV(errgv),lsb_sysmsg())
-#define SET_LSB_ERRMSG_TO(msg)  sv_setpv(GvSV(errgv),msg)
+#ifndef PL_errgv
+#define PL_errgv errgv
+#endif
+
+#define SET_LSB_ERRMSG sv_setpv(GvSV(PL_errgv),lsb_sysmsg())
+#define SET_LSB_ERRMSG_TO(msg)  sv_setpv(GvSV(PL_errgv),msg)
 
 static int
 not_here(s)
@@ -3925,7 +3930,7 @@ not_there:
 
 int
 set_jobname( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_JOB_NAME ){
     SET_LSB_ERRMSG_TO("Job Name can only be specified once");
@@ -3938,7 +3943,7 @@ set_jobname( struct submit *s, char *key, SV* value ){
 
 int
 set_queue( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_QUEUE ){
     SET_LSB_ERRMSG_TO("Queue can only be specified once");
@@ -3951,7 +3956,7 @@ set_queue( struct submit *s, char *key, SV* value ){
 
 int
 set_resreq( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_RES_REQ ){
     SET_LSB_ERRMSG_TO("Resource requirements can only be specified once");
@@ -3965,7 +3970,7 @@ set_resreq( struct submit *s, char *key, SV* value ){
 
 int
 set_hosts( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
   char **hosts;
 
   if( s->options & SUB_HOST ){
@@ -4004,7 +4009,7 @@ set_hosts( struct submit *s, char *key, SV* value ){
 
 int
 set_memlimit( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->rLimits[LSF_RLIMIT_RSS] != -1 ){
     SET_LSB_ERRMSG_TO("memlimit can only be specified once");
@@ -4016,7 +4021,7 @@ set_memlimit( struct submit *s, char *key, SV* value ){
 
 int
 set_cpulimit( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->rLimits[LSF_RLIMIT_CPU] != -1 ){
     SET_LSB_ERRMSG_TO("cpulimit can only be specified once");
@@ -4028,7 +4033,7 @@ set_cpulimit( struct submit *s, char *key, SV* value ){
 
 int
 set_filelimit( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->rLimits[LSF_RLIMIT_FSIZE] != -1 ){
     SET_LSB_ERRMSG_TO("filelimit can only be specified once");
@@ -4040,7 +4045,7 @@ set_filelimit( struct submit *s, char *key, SV* value ){
 
 int
 set_datalimit( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->rLimits[LSF_RLIMIT_DATA] != -1 ){
     SET_LSB_ERRMSG_TO("datalimit can only be specified once");
@@ -4051,7 +4056,7 @@ set_datalimit( struct submit *s, char *key, SV* value ){
 
 int
 set_stacklimit( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->rLimits[LSF_RLIMIT_STACK] != -1 ){
     SET_LSB_ERRMSG_TO("stacklimit can only be specified once");
@@ -4063,7 +4068,7 @@ set_stacklimit( struct submit *s, char *key, SV* value ){
 
 int
 set_corelimit( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->rLimits[LSF_RLIMIT_CORE] != -1 ){
     SET_LSB_ERRMSG_TO("corelimit can only be specified once");
@@ -4075,7 +4080,7 @@ set_corelimit( struct submit *s, char *key, SV* value ){
 
 int
 set_runlimit( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->rLimits[LSF_RLIMIT_RUN] != -1 ){
     SET_LSB_ERRMSG_TO("runlimit can only be specified once");
@@ -4087,7 +4092,7 @@ set_runlimit( struct submit *s, char *key, SV* value ){
 
 int
 set_processlimit( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->rLimits[LSF_RLIMIT_PROCESS] != -1 ){
     SET_LSB_ERRMSG_TO("processlimit can only be specified once");
@@ -4099,7 +4104,7 @@ set_processlimit( struct submit *s, char *key, SV* value ){
 
 int
 set_mailuser( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->mailUser ){
     SET_LSB_ERRMSG_TO("mail user can only be specified once");
@@ -4112,7 +4117,7 @@ set_mailuser( struct submit *s, char *key, SV* value ){
 
 int
 set_maxprocs( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->maxNumProcessors ){
     SET_LSB_ERRMSG_TO("max processors can only be specified once");
@@ -4124,7 +4129,7 @@ set_maxprocs( struct submit *s, char *key, SV* value ){
 
 int
 set_hostspec( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_HOST_SPEC ){
     SET_LSB_ERRMSG_TO("hostspec can only be specified once");
@@ -4137,7 +4142,7 @@ set_hostspec( struct submit *s, char *key, SV* value ){
 
 int
 set_hold( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options2 & SUB2_HOLD ){
     SET_LSB_ERRMSG_TO("hold can only be specified once");
@@ -4149,7 +4154,7 @@ set_hold( struct submit *s, char *key, SV* value ){
 
 int
 set_rerunnable( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_RERUNNABLE ){
     SET_LSB_ERRMSG_TO("rerunnable can only be specified once");
@@ -4161,7 +4166,7 @@ set_rerunnable( struct submit *s, char *key, SV* value ){
 
 int
 set_restartforce( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_RESTART_FORCE ){
     SET_LSB_ERRMSG_TO("restart force can only be specified once");
@@ -4173,7 +4178,7 @@ set_restartforce( struct submit *s, char *key, SV* value ){
 
 int
 set_command( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->command ){
     SET_LSB_ERRMSG_TO("command can only be specified once");
@@ -4185,7 +4190,7 @@ set_command( struct submit *s, char *key, SV* value ){
 
 int 
 set_checkpointperiod( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_CHKPNT_PERIOD ){
     SET_LSB_ERRMSG_TO("checkpoint period can only be specified once");
@@ -4198,7 +4203,7 @@ set_checkpointperiod( struct submit *s, char *key, SV* value ){
 
 int
 set_checkpointable( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_CHKPNTABLE ){
     SET_LSB_ERRMSG_TO("checkpointable can only be specified once");
@@ -4222,7 +4227,7 @@ set_checkpointcopy( struct submit *s, char *key, SV* value ){
 
 int
 set_checkpointforce( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_CHKPNT_FORCE ){
     SET_LSB_ERRMSG_TO("checkpoint force can only be specified once");
@@ -4303,7 +4308,7 @@ int set_xfile(struct xFile *xf, char *operation){
 }
 
 int set_transfer( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
   char *command;
 
   if(s->options & SUB_OTHER_FILES)
@@ -4344,7 +4349,7 @@ int set_transfer( struct submit *s, char *key, SV* value ){
 }
 
 int set_dependcond( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_DEPEND_COND ){
     SET_LSB_ERRMSG_TO("dependency condition can only be specified once");
@@ -4356,7 +4361,7 @@ int set_dependcond( struct submit *s, char *key, SV* value ){
 }
 
 int set_begintime( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->beginTime ){
     SET_LSB_ERRMSG_TO("begin time can only be specified once");
@@ -4367,7 +4372,7 @@ int set_begintime( struct submit *s, char *key, SV* value ){
 }
 
 int set_termtime( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
   time_t val;
 
   if( s->termTime ){
@@ -4379,7 +4384,7 @@ int set_termtime( struct submit *s, char *key, SV* value ){
 }
 
 int set_block( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options2 & SUB2_BSUB_BLOCK ){
     SET_LSB_ERRMSG_TO("block can only be specified once");
@@ -4390,7 +4395,7 @@ int set_block( struct submit *s, char *key, SV* value ){
 }
 
 int set_infile( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_IN_FILE ){
     SET_LSB_ERRMSG_TO("input file can only be specified once");
@@ -4402,7 +4407,7 @@ int set_infile( struct submit *s, char *key, SV* value ){
 }
 
 int set_outfile( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_OUT_FILE ){
     SET_LSB_ERRMSG_TO("output file can only be specified once");
@@ -4414,7 +4419,7 @@ int set_outfile( struct submit *s, char *key, SV* value ){
 }
 
 int set_errfile( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_ERR_FILE ){
     SET_LSB_ERRMSG_TO("error file can only be specified once");
@@ -4426,7 +4431,7 @@ int set_errfile( struct submit *s, char *key, SV* value ){
 }
 
 int set_interactive( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_INTERACTIVE ){
     SET_LSB_ERRMSG_TO("interactive can only be specified once");
@@ -4437,7 +4442,7 @@ int set_interactive( struct submit *s, char *key, SV* value ){
 }
 
 int set_interactive_pty( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_PTY ){
     SET_LSB_ERRMSG_TO("pty can only be specified once");
@@ -4448,7 +4453,7 @@ int set_interactive_pty( struct submit *s, char *key, SV* value ){
 }
 
 int set_interactive_shell( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_PTY_SHELL ){
     SET_LSB_ERRMSG_TO("pty shell can only be specified once");
@@ -4459,7 +4464,7 @@ int set_interactive_shell( struct submit *s, char *key, SV* value ){
 }
 
 int set_exclusive( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_EXCLUSIVE ){
     SET_LSB_ERRMSG_TO("exclusive can only be specified once");
@@ -4470,7 +4475,7 @@ int set_exclusive( struct submit *s, char *key, SV* value ){
 }
 
 int set_preexec( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_PRE_EXEC ){
     SET_LSB_ERRMSG_TO("preexec can only be specified once");
@@ -4482,7 +4487,7 @@ int set_preexec( struct submit *s, char *key, SV* value ){
 }
 
 int set_usergroup( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->userGroup ){
     SET_LSB_ERRMSG_TO("user group can only be specified once");
@@ -4493,7 +4498,7 @@ int set_usergroup( struct submit *s, char *key, SV* value ){
 }
 
 int set_projectname( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->projectName ){
     SET_LSB_ERRMSG_TO("project name can only be specified once");
@@ -4504,7 +4509,7 @@ int set_projectname( struct submit *s, char *key, SV* value ){
 }
 
 int set_numprocessors( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->numProcessors != 1){
     SET_LSB_ERRMSG_TO("num procs can only be specified once");
@@ -4515,7 +4520,7 @@ int set_numprocessors( struct submit *s, char *key, SV* value ){
 }
 
 int set_sigvalue( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->sigValue ){
     SET_LSB_ERRMSG_TO("sigvalue can only be specified once");
@@ -4526,7 +4531,7 @@ int set_sigvalue( struct submit *s, char *key, SV* value ){
 }
 
 int set_notifybegin( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_NOTIFY_BEGIN ){
     SET_LSB_ERRMSG_TO("notify begin can only be specified once");
@@ -4537,7 +4542,7 @@ int set_notifybegin( struct submit *s, char *key, SV* value ){
 }
 
 int set_notifyend( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_NOTIFY_END ){
     SET_LSB_ERRMSG_TO("notify end can only be specified once");
@@ -4548,7 +4553,7 @@ int set_notifyend( struct submit *s, char *key, SV* value ){
 }
 
 int set_loginshell( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
 
   if( s->options & SUB_LOGIN_SHELL ){
     SET_LSB_ERRMSG_TO("login shell can only be specified once");
@@ -4560,7 +4565,7 @@ int set_loginshell( struct submit *s, char *key, SV* value ){
 }
 
 int set_exception( struct submit *s, char *key, SV* value ){
-  int len;
+  STRLEN len;
   char *except;
 
   if( s->exceptList ){
@@ -4989,6 +4994,79 @@ typedef struct queueInfoEnt LSF_Batch_queueInfo;
 typedef struct parameterInfo LSF_Batch_parameterInfo;
 typedef struct hostPartInfoEnt LSF_Batch_hostPartInfo;
 typedef struct hostPartUserInfo LSF_Batch_hostPartUserInfo;
+typedef struct jobExternalMsgReq LSF_Batch_jobExternalMsgReq;
+typedef struct jobExternalMsgReply LSF_Batch_jobExternalMsgReply;
+typedef struct jobExternalMsgLog LSF_Batch_jobExternalMsgLog;
+/* typedefs for LSF Event logging */
+typedef struct eventRec  LSF_Batch_eventRec ;
+typedef struct logSwitchLog LSF_Batch_logSwitchLog;
+typedef struct jgrpNewLog LSF_Batch_jgrpNewLog;
+typedef struct jgrpCtrlLog LSF_Batch_jgrpCtrlLog;
+typedef struct jgrpStatusLog LSF_Batch_jgrpStatusLog;
+typedef struct jobNewLog LSF_Batch_jobNewLog;
+typedef struct jobModLog LSF_Batch_jobModLog;
+typedef struct jobStartLog LSF_Batch_jobStartLog;
+typedef struct jobStartAcceptLog LSF_Batch_jobStartAcceptLog;
+typedef struct jobExecuteLog LSF_Batch_jobExecuteLog;
+typedef struct jobStatusLog LSF_Batch_jobStatusLog;
+typedef struct sbdJobStatusLog LSF_Batch_sbdJobStatusLog;
+typedef struct sbdUnreportedStatusLog LSF_Batch_sbdUnreportedStatusLog;
+typedef struct jobSwitchLog LSF_Batch_jobSwitchLog;
+typedef struct jobMoveLog LSF_Batch_jobMoveLog;
+typedef struct chkpntLog LSF_Batch_chkpntLog;
+typedef struct jobRequeueLog LSF_Batch_jobRequeueLog;
+typedef struct jobCleanLog LSF_Batch_jobCleanLog;
+typedef struct jobExceptionLog LSF_Batch_jobExceptionLog;
+typedef struct sigactLog LSF_Batch_sigactLog;
+typedef struct migLog LSF_Batch_migLog;
+typedef struct signalLog LSF_Batch_signalLog;
+typedef struct queueCtrlLog LSF_Batch_queueCtrlLog;
+typedef struct newDebugLog LSF_Batch_newDebugLog;
+typedef struct hostCtrlLog LSF_Batch_hostCtrlLog;
+typedef struct mbdStartLog LSF_Batch_mbdStartLog;
+typedef struct mbdDieLog LSF_Batch_mbdDieLog;
+typedef struct unfulfillLog LSF_Batch_unfulfillLog;
+typedef struct jobFinishLog LSF_Batch_jobFinishLog;
+typedef struct loadIndexLog LSF_Batch_loadIndexLog;
+typedef struct calendarLog LSF_Batch_calendarLog;
+typedef struct jobForwardLog LSF_Batch_jobForwardLog;
+typedef struct jobAcceptLog LSF_Batch_jobAcceptLog;
+typedef struct statusAckLog LSF_Batch_statusAckLog;
+typedef struct jobMsgLog LSF_Batch_jobMsgLog;
+typedef struct jobMsgAckLog LSF_Batch_jobMsgAckLog;
+typedef struct jobOccupyReqLog LSF_Batch_jobOccupyReqLog;
+typedef struct jobVacatedLog LSF_Batch_jobVacatedLog;
+typedef struct jobForceRequestLog LSF_Batch_jobForceRequestLog;
+typedef struct jobChunkLog LSF_Batch_jobChunkLog;
+typedef struct jobAttrSetLog LSF_Batch_jobAttrSetLog;
+typedef struct xFile LSF_Batch_xFile;
+typedef struct lsfRusage LSF_Batch_lsfRusage;
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::xFilePtr PREFIX = xf_
+
+char *
+xf_subFn(self)
+	LSF_Batch_xFile *self
+    CODE:
+	RETVAL = self->subFn;
+    OUTPUT:
+	RETVAL
+
+char *
+xf_execFn(self)
+	LSF_Batch_xFile *self
+    CODE:
+	RETVAL = self->execFn;
+    OUTPUT:
+	RETVAL
+
+int
+xf_options(self)
+	LSF_Batch_xFile *self
+    CODE:
+	RETVAL = self->options;
+    OUTPUT:
+	RETVAL
 
 MODULE = LSF::Batch		PACKAGE = LSF::Batch		PREFIX = lsb_
 
@@ -5113,7 +5191,7 @@ lsb_hostinfo(self, hosts)
 	    XSRETURN_EMPTY;
  	}
 	for( i = 0, p = hinfo; i < num; i++,p++ ){
-	    rv = newRV(&sv_undef);
+	    rv = newRV_inc(&PL_sv_undef);
 	    sv_setref_iv(rv, "LSF::Batch::hostInfoPtr",(I32)p);
 	    XPUSHs(sv_2mortal(rv));
 	}
@@ -5138,11 +5216,11 @@ lsb_hostinfo_ex(self, hosts, resreq, options)
 	hinfo = lsb_hostinfo_ex(hosts, &num, resreq, options);
 	if(hinfo == NULL){
 	    STATUS_NATIVE_SET(lsberrno);
-	    SET_LSB_ERRMSG;
+    SET_LSB_ERRMSG;
 	    XSRETURN_EMPTY;
  	}
 	for( i = 0, p = hinfo; i < num; i++,p++ ){
-	    rv = newRV(&sv_undef);
+	    rv = newRV_inc(&PL_sv_undef);
 	    sv_setref_iv(rv, "LSF::Batch::hostInfoPtr",(I32)p);
 	    XPUSHs(sv_2mortal(rv));
 	}
@@ -5399,7 +5477,7 @@ lsb_userinfo(self, users)
 	    XSRETURN_EMPTY;
  	}
 	for( i = 0, p = ui; i < num; i++,p++ ){
-	    rv = newRV(&sv_undef);
+	    rv = newRV_inc(&PL_sv_undef);
 	    sv_setref_iv(rv, "LSF::Batch::userInfoPtr",(I32)p);
 	    XPUSHs(sv_2mortal(rv));
 	}
@@ -5500,6 +5578,31 @@ lsb_parameterinfo(self)
 MODULE = LSF::Batch	PACKAGE = LSF::Batch::parameterInfoPtr	PREFIX = pi_
 
 char *
+pi_pjobSpoolDir(self)
+	LSF_Batch_parameterInfo *self;
+    CODE:
+	RETVAL = self->pjobSpoolDir;
+    OUTPUT:
+	RETVAL
+
+int
+pi_mbdRefreshTime(self)
+	LSF_Batch_parameterInfo *self;
+    CODE:
+	RETVAL = self->mbdRefreshTime;
+    OUTPUT:
+	RETVAL
+
+
+int
+pi_updJobRusageInterval(self)
+	LSF_Batch_parameterInfo *self;
+    CODE:
+	RETVAL = self->updJobRusageInterval;
+    OUTPUT:
+	RETVAL
+
+char *
 pi_defaultQueues(self)
 	LSF_Batch_parameterInfo *self;
     CODE:
@@ -5588,6 +5691,30 @@ pi_historyHours(self)
 	RETVAL
 
 int
+pi_maxUserPriority(self)
+	LSF_Batch_parameterInfo *self;
+    CODE:
+	RETVAL = self->maxUserPriority;
+    OUTPUT:
+	RETVAL
+
+int
+pi_jobPriorityValue(self)
+	LSF_Batch_parameterInfo *self;
+    CODE:
+	RETVAL = self->jobPriorityValue;
+    OUTPUT:
+	RETVAL
+
+int
+pi_jobPriorityTime(self)
+	LSF_Batch_parameterInfo *self;
+    CODE:
+	RETVAL = self->jobPriorityTime;
+    OUTPUT:
+	RETVAL
+
+int
 pi_pgSuspendIt(self)
 	LSF_Batch_parameterInfo *self;
     CODE:
@@ -5641,7 +5768,7 @@ lsb_queueinfo(self, queues, host, user, options)
 	    XSRETURN_EMPTY;
  	}
 	for( i = 0, p = qinfo; i < num; i++,p++ ){
-	    rv = newRV(&sv_undef);
+	    rv = newRV_inc(&PL_sv_undef);
 	    sv_setref_iv(rv, "LSF::Batch::queueInfoPtr",(I32)p);
 	    XPUSHs(sv_2mortal(rv));
 	}
@@ -5754,6 +5881,17 @@ qi_rLimits(self)
     PPCODE:
 	for( i = 0; i < LSF_RLIM_NLIMITS; i++){
           XPUSHs(sv_2mortal(newSViv(self->rLimits[i])));	
+        }
+	XSRETURN(LSF_RLIM_NLIMITS);
+
+void
+qi_defLimits(self)
+	LSF_Batch_queueInfo *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < LSF_RLIM_NLIMITS; i++){
+          XPUSHs(sv_2mortal(newSViv(self->defLimits[i])));	
         }
 	XSRETURN(LSF_RLIM_NLIMITS);
 
@@ -6034,11 +6172,20 @@ qi_shareAccts(self)
 	int i;
     PPCODE:
 	for( i = 0, p = self->shareAccts; i < self->numOfSAccts; i++,p++ ){
-	    rv = newRV(&sv_undef);
+	    rv = newRV_inc(&PL_sv_undef);
 	    sv_setref_iv(rv, "LSF::Batch::shareAcctInfoPtr",(I32)p);
 	    XPUSHs(sv_2mortal(rv));
 	}
 	XSRETURN(self->numOfSAccts);
+
+int
+qi_chunkJobSize(self)
+	LSF_Batch_queueInfo *self
+    CODE:
+	RETVAL = self->chunkJobSize;
+    OUTPUT:
+	RETVAL
+
 
 MODULE = LSF::Batch PACKAGE = LSF::Batch::shareAcctInfoPtr PREFIX = sai_
 
@@ -6446,6 +6593,7 @@ ji_runRusage(self)
     OUTPUT:
 	RETVAL
 
+
 int
 ji_jType(self)
 	LSF_Batch_jobInfo *self
@@ -6479,6 +6627,38 @@ LSF_Batch_jobInfo *self
 	for( i = 0; i < self->nIdx; i++)
           XPUSHs(sv_2mortal(newSVnv(self->loadStop[i])));	
 	XSRETURN(self->numExHosts);
+
+int
+ji_jobPriority(self)
+	LSF_Batch_jobInfo *self
+    CODE:
+	RETVAL = self->jobPriority;
+    OUTPUT:
+	RETVAL
+
+int
+ji_numExternalMsg(self)
+	LSF_Batch_jobInfo *self
+    CODE:
+	RETVAL = self->numExternalMsg;
+    OUTPUT:
+	RETVAL
+
+void
+ji_externalMsg(self)
+LSF_Batch_jobInfo *self
+    PREINIT:
+	SV *rv;
+        LSF_Batch_jobExternalMsgReply *p;
+	int i;
+    PPCODE:
+	for( i = 0, p = self->externalMsg; i < self->numExternalMsg; i++,p++ ){
+	    rv = newRV_inc(&PL_sv_undef);
+	    sv_setref_iv(rv, "LSF::Batch::jobExternalMsgReplyPtr",(IV)p);
+	    XPUSHs(sv_2mortal(rv));
+	}
+	XSRETURN(self->numExternalMsg);
+
 
 MODULE = LSF::Batch	PACKAGE = LSF::Batch::submitPtr		PREFIX = sub_
 
@@ -6646,7 +6826,7 @@ sub_xf(self)
         SV *rv;
     PPCODE:
 	for( i = 0; i < self->nxf; i++){
- 	  rv = newRV(&sv_undef);
+ 	  rv = newRV_inc(&PL_sv_undef);
 	  sv_setref_iv(rv, "LSF::Batch::xFilePtr",(I32)(self->xf + i));
 	  XPUSHs(sv_2mortal(rv));
         }
@@ -6733,7 +6913,7 @@ job_new(type, jobId, arrayIdx)
 	}
 	j->jobId = jobId;
         j->arrayIdx = arrayIdx;
-	rv = newRV(&sv_undef);
+	rv = newRV_inc(&PL_sv_undef);
 	sv_setref_iv(rv, type,(I32)j);
 	XPUSHs(sv_2mortal(rv));
 	XSRETURN(1);
@@ -6977,7 +7157,7 @@ lsb_sharedresourceinfo(self, resources, hostName)
 	    XSRETURN_EMPTY;
  	}
 	for( i = 0, p = si; i < num; i++,p++ ){
-	    rv = newRV(&sv_undef);
+	    rv = newRV_inc(&PL_sv_undef);
 	    sv_setref_iv(rv, "LSF::Batch::sharedResourceInfoPtr",(I32)p);
 	    XPUSHs(sv_2mortal(rv));
 	}
@@ -7004,7 +7184,7 @@ sri_instances(self)
         SV *rv;
     PPCODE:
 	for( i = 0; i < self->nInstances; i++){
- 	  rv = newRV(&sv_undef);
+ 	  rv = newRV_inc(&PL_sv_undef);
 	  sv_setref_iv(rv, 
                        "LSF::Batch::sharedResourceInstancePtr",
                        (I32)(self->instances + i));
@@ -7064,7 +7244,7 @@ lsb_hostpartinfo(self, hostParts)
 	    XSRETURN_EMPTY;
  	}
 	for( i = 0, p = pi; i < num; i++,p++ ){
-	    rv = newRV(&sv_undef);
+	    rv = newRV_inc(&PL_sv_undef);
 	    sv_setref_iv(rv, "LSF::Batch::hostPartInfoPtr",(I32)p);
 	    XPUSHs(sv_2mortal(rv));
 	}
@@ -7098,7 +7278,7 @@ hpi_users(self)
         SV *rv;
     PPCODE:
 	for( i = 0; i < self->numUsers; i++){
-          rv = newRV(&sv_undef);
+          rv = newRV_inc(&PL_sv_undef);
 	  sv_setref_iv(rv, 
                        "LSF::Batch::hostPartUserInfoPtr",
                         (I32)(self->users + i));
@@ -7157,3 +7337,3461 @@ hpu_histCpuTime(self)
     OUTPUT:
 	RETVAL
 	
+MODULE = LSF::Batch PACKAGE = LSF::Batch PREFIX = lsb_
+
+LSF_Batch_eventRec *
+lsb_geteventrec(self, log_fp, lineNum)
+	void  *self
+	FILE* log_fp
+	SV*   lineNum
+   PREINIT:
+	int ln;
+   CODE:
+	if( SvIOK(lineNum) ){
+	   ln = (int)SvIV(lineNum);
+	}
+	else{
+	   croak("geteventrec: lineNum is not an integer");
+	}
+	if((RETVAL = lsb_geteventrec(log_fp, &ln)) == NULL){
+	  STATUS_NATIVE_SET(lsberrno);
+	  SET_LSB_ERRMSG;
+	  XSRETURN_UNDEF;
+	}
+	sv_setiv(lineNum, ln);
+   OUTPUT:
+	RETVAL
+	 
+MODULE = LSF::Batch PACKAGE = LSF::Batch::eventRecPtr PREFIX = er_
+
+char *
+er_version(self)
+	LSF_Batch_eventRec *self
+    CODE:
+	RETVAL = self->version;
+    OUTPUT:
+	RETVAL
+
+int 
+er_type(self)
+	LSF_Batch_eventRec *self
+    CODE:
+	RETVAL = self->type;
+    OUTPUT:
+	RETVAL
+
+int
+er_eventTime(self)
+	LSF_Batch_eventRec *self
+    CODE:
+	RETVAL = self->eventTime;
+    OUTPUT:
+	RETVAL
+
+void
+er_eventLog(self)
+	LSF_Batch_eventRec *self
+    PREINIT:
+	char *label;
+	SV *rv;
+    PPCODE:
+	switch(self->type){
+	   case EVENT_LOG_SWITCH:
+	      label = "LSF::Batch::logSwitchLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.logSwitchLog);
+	      break;
+	   /*
+	   case EVENT_JGRP_NEW:
+	      label = "LSF::Batch::jgrpNewLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jgrpNewLog);
+	      break;
+	   case EVENT_JGRP_CNTL:
+	      label = "LSF::Batch::jgrpCtrlLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jgrpCtrlLog);
+	      break;
+           */
+	   case EVENT_JGRP_STATUS:
+	      label = "LSF::Batch::jgrpStatusLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jgrpStatusLog);
+	      break;
+	   case EVENT_JOB_NEW:
+	      label = "LSF::Batch::jobNewLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobNewLog);
+	      break;
+	   case EVENT_JOB_MODIFY:
+	      label = "LSF::Batch::jobModLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobModLog);
+	      break;
+	   case EVENT_JOB_START:
+	      label = "LSF::Batch::jobStartLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobStartLog);
+	      break;
+	   case EVENT_JOB_START_ACCEPT:
+	      label = "LSF::Batch::jobStartAcceptLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobStartAcceptLog);
+	      break;
+	   case EVENT_JOB_EXECUTE:
+	      label = "LSF::Batch::jobExecuteLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobExecuteLog);
+	      break;
+	   case EVENT_JOB_STATUS:
+	      label = "LSF::Batch::jobStatusLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobStatusLog);
+	      break;
+	   case EVENT_SBD_JOB_STATUS:
+	      label = "LSF::Batch::sbdJobStatusLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.sbdJobStatusLog);
+	      break;
+	   case EVENT_SBD_UNREPORTED_STATUS:
+	      label = "LSF::Batch::sbdUnreportedStatusLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.sbdUnreportedStatusLog);
+	      break;
+	   case EVENT_JOB_SWITCH:
+	      label = "LSF::Batch::jobSwitchLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobSwitchLog);
+	      break;
+	   case EVENT_JOB_MOVE:
+	      label = "LSF::Batch::jobMoveLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobMoveLog);
+	      break;
+	   case EVENT_CHKPNT:
+	      label = "LSF::Batch::chkpntLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.chkpntLog);
+	      break;
+	   case EVENT_JOB_REQUEUE:
+	      label = "LSF::Batch::jobRequeueLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobRequeueLog);
+	      break;
+	   case EVENT_JOB_CLEAN:
+	      label = "LSF::Batch::jobCleanLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobCleanLog);
+	      break;
+	   case EVENT_JOB_EXCEPTION:
+	      label = "LSF::Batch::jobExceptionLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobExceptionLog);
+	      break;
+	   /*
+	   case EVENT_SIGACT:
+	      label = "LSF::Batch::sigactLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.sigactLog);
+	      break;
+	   */
+	   case EVENT_MIG:
+	      label = "LSF::Batch::migLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.migLog);
+	      break;
+	   /*
+	   case EVENT_SIGNAL:
+	      label = "LSF::Batch::signalLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.signalLog);
+	      break;
+	   */
+	   case EVENT_QUEUE_CTRL:
+	      label = "LSF::Batch::queueCtrlLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.queueCtrlLog);
+	      break;
+	   /*
+	   case EVENT_NEW_DEBUG:
+	      label = "LSF::Batch::newDebugLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.newDebugLog);
+	      break;
+	   */
+	   case EVENT_HOST_CTRL:
+	      label = "LSF::Batch::hostCtrlLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.hostCtrlLog);
+	      break;
+	   case EVENT_MBD_START:
+	      label = "LSF::Batch::mbdStartLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.mbdStartLog);
+	      break;
+	   case EVENT_MBD_DIE:
+	      label = "LSF::Batch::mbdDieLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.mbdDieLog);
+	      break;
+	   case EVENT_MBD_UNFULFILL:
+	      label = "LSF::Batch::unfulfillLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.unfulfillLog);
+	      break;
+	   case EVENT_JOB_FINISH:
+	      label = "LSF::Batch::jobFinishLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobFinishLog);
+	      break;
+	   case EVENT_LOAD_INDEX:
+	      label = "LSF::Batch::loadIndexLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.loadIndexLog);
+	      break;
+	   case EVENT_CAL_NEW:
+	   case EVENT_CAL_MODIFY:
+	   case EVENT_CAL_DELETE:
+	   case EVENT_CAL_UNDELETE:
+	      label = "LSF::Batch::calendarLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.calendarLog);
+	      break;
+	   case EVENT_JOB_FORWARD:
+	      label = "LSF::Batch::jobForwardLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobForwardLog);
+	      break;
+	   case EVENT_JOB_ACCEPT:
+	      label = "LSF::Batch::jobAcceptLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobAcceptLog);
+	      break;
+	   case EVENT_STATUS_ACK:
+	      label = "LSF::Batch::statusAckLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.statusAckLog);
+	      break;
+	   case EVENT_JOB_MSG:
+	      label = "LSF::Batch::jobMsgLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobMsgLog);
+	      break;
+	   case EVENT_JOB_MSG_ACK:
+	      label = "LSF::Batch::jobMsgAckLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobMsgAckLog);
+	      break;
+	   case EVENT_JOB_OCCUPY_REQ:
+	      label = "LSF::Batch::jobOccupyReqLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobOccupyReqLog);
+	      break;
+	   case EVENT_JOB_VACATED:
+	      label = "LSF::Batch::jobVacatedLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobVacatedLog);
+	      break;
+	   case EVENT_JOB_FORCE:
+	      label = "LSF::Batch::jobForceRequestLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobForceRequestLog);
+	      break;
+	   case EVENT_JOB_CHUNK:
+	      label = "LSF::Batch::jobChunkLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobChunkLog);
+	      break;
+           /*
+	   case EVENT_JOB_EXTERNAL_MSG:
+	      label = "LSF::Batch::jobExternalMsgLogPtr";
+	      rv = newRV_inc(&PL_sv_undef);
+	      sv_setref_iv(rv, label, (IV)&self->eventLog.jobExternalMsgLog);
+	      break;
+	   */
+           case EVENT_JOB_ATTR_SET:
+              label = "LSF::Batch::jobAttrSetLogPtr";
+              rv = newRV_inc(&PL_sv_undef);
+              sv_setref_iv(rv, label, (IV)&self->eventLog.jobAttrSetLog);
+              break;
+	   default:
+	}
+	XPUSHs(sv_2mortal(rv));
+	XSRETURN(1);
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::logSwitchLogPtr PREFIX = lsl_
+
+int
+lsl_lastJobId(self)
+	LSF_Batch_logSwitchLog *self
+    CODE:
+	RETVAL = self->lastJobId;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jgrpNewLogPtr PREFIX = jnl_
+
+int
+jnl_userId(self)
+	LSF_Batch_jgrpNewLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl_timeEvent(self)
+	LSF_Batch_jgrpNewLog *self
+    CODE:
+	RETVAL = self->timeEvent;
+    OUTPUT:
+	RETVAL
+
+int
+jnl_delOptions(self)
+	LSF_Batch_jgrpNewLog *self
+    CODE:
+	RETVAL = self->delOptions;
+    OUTPUT:
+	RETVAL
+
+int
+jnl_fromPlatform(self)
+	LSF_Batch_jgrpNewLog *self
+    CODE:
+	RETVAL = self->fromPlatform;
+    OUTPUT:
+	RETVAL
+
+int
+jnl_delOptions2(self)
+	LSF_Batch_jgrpNewLog *self
+    CODE:
+	RETVAL = self->delOptions2;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl_depCond(self)
+	LSF_Batch_jgrpNewLog *self
+    CODE:
+	RETVAL = self->depCond;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl_userName(self)
+	LSF_Batch_jgrpNewLog *self
+    CODE:
+	RETVAL = self->userName;
+    OUTPUT:
+	RETVAL
+
+time_t
+jnl_submitTime(self)
+	LSF_Batch_jgrpNewLog *self
+    CODE:
+	RETVAL = self->submitTime;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl_destSpec(self)
+	LSF_Batch_jgrpNewLog *self
+    CODE:
+	RETVAL = self->destSpec;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl_groupSpec(self)
+	LSF_Batch_jgrpNewLog *self
+    CODE:
+	RETVAL = self->groupSpec;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jgrpCtrlLogPtr PREFIX = jcl_
+
+int
+jcl_userId(self)
+	LSF_Batch_jgrpCtrlLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+char *
+jcl_userName(self)
+	LSF_Batch_jgrpCtrlLog *self
+    CODE:
+	RETVAL = self->userName;
+    OUTPUT:
+	RETVAL
+
+int
+jcl_ctrlOp(self)
+	LSF_Batch_jgrpCtrlLog *self
+    CODE:
+	RETVAL = self->ctrlOp;
+    OUTPUT:
+	RETVAL
+
+char *
+jcl_groupSpec(self)
+	LSF_Batch_jgrpCtrlLog *self
+    CODE:
+	RETVAL = self->groupSpec;
+    OUTPUT:
+	RETVAL
+
+int
+jcl_options(self)
+	LSF_Batch_jgrpCtrlLog *self
+    CODE:
+	RETVAL = self->options;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jgrpStatusLogPtr PREFIX = jsl_
+
+int
+jsl_status(self)
+	LSF_Batch_jgrpStatusLog *self
+    CODE:
+	RETVAL = self->status;
+    OUTPUT:
+	RETVAL
+
+int
+jsl_oldStatus(self)
+	LSF_Batch_jgrpStatusLog *self
+    CODE:
+	RETVAL = self->oldStatus;
+    OUTPUT:
+	RETVAL
+
+char *
+jsl_groupSpec(self)
+	LSF_Batch_jgrpStatusLog *self
+    CODE:
+	RETVAL = self->groupSpec;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobNewLogPtr PREFIX = jnl2_
+
+char *
+jnl2_subHomeDir(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->subHomeDir;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_umask(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->umask;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_hostSpec(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->hostSpec;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_cwd(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->cwd;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_options(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->options;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_jobSpoolDir(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->jobSpoolDir;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_niosPort(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->niosPort;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_preExecCmd(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->preExecCmd;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_numProcessors(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->numProcessors;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_fromHost(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->fromHost;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_numAskedHosts(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->numAskedHosts;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_exceptList(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->exceptList;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_jobFile(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->jobFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_errFile(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->errFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_projectName(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->projectName;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_outFile(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->outFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_schedHostType(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->schedHostType;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_resReq(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->resReq;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_queue(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->queue;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_userName(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->userName;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_jobId(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_loginShell(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->loginShell;
+    OUTPUT:
+	RETVAL
+
+LSF_Batch_xFile *
+jnl2_xf(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->xf;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_restartPid(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->restartPid;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_sigValue(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->sigValue;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_maxNumProcessors(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->maxNumProcessors;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_timeEvent(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->timeEvent;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_mailUser(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->mailUser;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_options2(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->options2;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_idx(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_nxf(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->nxf;
+    OUTPUT:
+	RETVAL
+
+time_t
+jnl2_submitTime(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->submitTime;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_chkpntDir(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->chkpntDir;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_userPriority(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->userPriority;
+    OUTPUT:
+	RETVAL
+
+time_t
+jnl2_beginTime(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->beginTime;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_userId(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+void
+jnl2_askedHosts(self)
+	LSF_Batch_jobNewLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < self->numAskedHosts; i++)
+          XPUSHs(sv_2mortal(newSVpv(self->askedHosts[i],0)));	
+	XSRETURN(self->numAskedHosts);
+
+char *
+jnl2_userGroup(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->userGroup;
+    OUTPUT:
+	RETVAL
+
+void
+jnl2_rLimits(self)
+	LSF_Batch_jobNewLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < LSF_RLIM_NLIMITS; i++)
+          XPUSHs(sv_2mortal(newSViv(self->rLimits[i])));	
+	XSRETURN(LSF_RLIM_NLIMITS);
+
+time_t
+jnl2_termTime(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->termTime;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_inFileSpool(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->inFileSpool;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_dependCond(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->dependCond;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_jobName(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->jobName;
+    OUTPUT:
+	RETVAL
+
+int
+jnl2_chkpntPeriod(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->chkpntPeriod;
+    OUTPUT:
+	RETVAL
+
+float
+jnl2_hostFactor(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->hostFactor;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_command(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->command;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_inFile(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->inFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jnl2_commandSpool(self)
+	LSF_Batch_jobNewLog *self
+    CODE:
+	RETVAL = self->commandSpool;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobModLogPtr PREFIX = jml_
+
+char *
+jml_subHomeDir(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->subHomeDir;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_hostSpec(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->hostSpec;
+    OUTPUT:
+	RETVAL
+
+int
+jml_umask(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->umask;
+    OUTPUT:
+	RETVAL
+
+int
+jml_delOptions(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->delOptions;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_cwd(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->cwd;
+    OUTPUT:
+	RETVAL
+
+int
+jml_options(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->options;
+    OUTPUT:
+	RETVAL
+
+int
+jml_niosPort(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->niosPort;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_preExecCmd(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->preExecCmd;
+    OUTPUT:
+	RETVAL
+
+int
+jml_numProcessors(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->numProcessors;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_fromHost(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->fromHost;
+    OUTPUT:
+	RETVAL
+
+int
+jml_numAskedHosts(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->numAskedHosts;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_jobIdStr(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->jobIdStr;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_exceptList(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->exceptList;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_jobFile(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->jobFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_errFile(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->errFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_projectName(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->projectName;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_outFile(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->outFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_schedHostType(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->schedHostType;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_resReq(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->resReq;
+    OUTPUT:
+	RETVAL
+
+int
+jml_delOptions2(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->delOptions2;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_queue(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->queue;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_userName(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->userName;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_loginShell(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->loginShell;
+    OUTPUT:
+	RETVAL
+
+LSF_Batch_xFile *
+jml_xf(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->xf;
+    OUTPUT:
+	RETVAL
+
+int
+jml_restartPid(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->restartPid;
+    OUTPUT:
+	RETVAL
+
+int
+jml_sigValue(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->sigValue;
+    OUTPUT:
+	RETVAL
+
+int
+jml_maxNumProcessors(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->maxNumProcessors;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_timeEvent(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->timeEvent;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_mailUser(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->mailUser;
+    OUTPUT:
+	RETVAL
+
+int
+jml_options2(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->options2;
+    OUTPUT:
+	RETVAL
+
+int
+jml_nxf(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->nxf;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_chkpntDir(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->chkpntDir;
+    OUTPUT:
+	RETVAL
+
+int
+jml_submitTime(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->submitTime;
+    OUTPUT:
+	RETVAL
+
+int
+jml_userPriority(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->userPriority;
+    OUTPUT:
+	RETVAL
+
+int
+jml_beginTime(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->beginTime;
+    OUTPUT:
+	RETVAL
+
+int
+jml_userId(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_askedHosts(self)
+	LSF_Batch_jobModLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < self->numAskedHosts; i++)
+          XPUSHs(sv_2mortal(newSVpv(self->askedHosts[i],0)));	
+	XSRETURN(self->numAskedHosts);
+
+char *
+jml_userGroup(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->userGroup;
+    OUTPUT:
+	RETVAL
+
+int
+jml_termTime(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->termTime;
+    OUTPUT:
+	RETVAL
+
+void
+jml_rLimits(self)
+	LSF_Batch_jobModLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < LSF_RLIM_NLIMITS; i++)
+          XPUSHs(sv_2mortal(newSViv(self->rLimits[i])));	
+	XSRETURN(LSF_RLIM_NLIMITS);
+
+char *
+jml_dependCond(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->dependCond;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_inFileSpool(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->inFileSpool;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_jobName(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->jobName;
+    OUTPUT:
+	RETVAL
+
+int
+jml_chkpntPeriod(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->chkpntPeriod;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_command(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->command;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_inFile(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->inFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jml_commandSpool(self)
+	LSF_Batch_jobModLog *self
+    CODE:
+	RETVAL = self->commandSpool;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobStartLogPtr PREFIX = jsl2_
+
+int
+jsl2_jFlags(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->jFlags;
+    OUTPUT:
+	RETVAL
+
+char *
+jsl2_queuePostCmd(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->queuePostCmd;
+    OUTPUT:
+	RETVAL
+
+int
+jsl2_jStatus(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->jStatus;
+    OUTPUT:
+	RETVAL
+
+int
+jsl2_jobPGid(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->jobPGid;
+    OUTPUT:
+	RETVAL
+
+int
+jsl2_jobId(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+char *
+jsl2_userGroup(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->userGroup;
+    OUTPUT:
+	RETVAL
+
+int
+jsl2_numExHosts(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->numExHosts;
+    OUTPUT:
+	RETVAL
+
+float
+jsl2_hostFactor(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->hostFactor;
+    OUTPUT:
+	RETVAL
+
+int
+jsl2_idx(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+char *
+jsl2_queuePreCmd(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->queuePreCmd;
+    OUTPUT:
+	RETVAL
+
+void
+jsl2_execHosts(self)
+	LSF_Batch_jobStartLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < self->numExHosts; i++)
+          XPUSHs(sv_2mortal(newSVpv(self->execHosts[i],0)));	
+	XSRETURN(self->numExHosts);
+
+int
+jsl2_jobPid(self)
+	LSF_Batch_jobStartLog *self
+    CODE:
+	RETVAL = self->jobPid;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobStartAcceptLogPtr PREFIX = jsal_
+
+int
+jsal_jobPGid(self)
+	LSF_Batch_jobStartAcceptLog *self
+    CODE:
+	RETVAL = self->jobPGid;
+    OUTPUT:
+	RETVAL
+
+int
+jsal_jobId(self)
+	LSF_Batch_jobStartAcceptLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+jsal_idx(self)
+	LSF_Batch_jobStartAcceptLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+jsal_jobPid(self)
+	LSF_Batch_jobStartAcceptLog *self
+    CODE:
+	RETVAL = self->jobPid;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobExecuteLogPtr PREFIX = jel_
+
+char *
+jel_execHome(self)
+	LSF_Batch_jobExecuteLog *self
+    CODE:
+	RETVAL = self->execHome;
+    OUTPUT:
+	RETVAL
+
+int
+jel_execUid(self)
+	LSF_Batch_jobExecuteLog *self
+    CODE:
+	RETVAL = self->execUid;
+    OUTPUT:
+	RETVAL
+
+int
+jel_idx(self)
+	LSF_Batch_jobExecuteLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+jel_jobPid(self)
+	LSF_Batch_jobExecuteLog *self
+    CODE:
+	RETVAL = self->jobPid;
+    OUTPUT:
+	RETVAL
+
+char *
+jel_execUsername(self)
+	LSF_Batch_jobExecuteLog *self
+    CODE:
+	RETVAL = self->execUsername;
+    OUTPUT:
+	RETVAL
+
+int
+jel_jobId(self)
+	LSF_Batch_jobExecuteLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+char *
+jel_execCwd(self)
+	LSF_Batch_jobExecuteLog *self
+    CODE:
+	RETVAL = self->execCwd;
+    OUTPUT:
+	RETVAL
+
+int
+jel_jobPGid(self)
+	LSF_Batch_jobExecuteLog *self
+    CODE:
+	RETVAL = self->jobPGid;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobStatusLogPtr PREFIX = jsl3_
+
+int
+jsl3_jFlags(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = self->jFlags;
+    OUTPUT:
+	RETVAL
+
+int
+jsl3_ru(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = self->ru;
+    OUTPUT:
+	RETVAL
+
+int
+jsl3_jStatus(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = self->jStatus;
+    OUTPUT:
+	RETVAL
+
+int
+jsl3_exitStatus(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = self->exitStatus;
+    OUTPUT:
+	RETVAL
+
+LSF_Batch_lsfRusage *
+jsl3_lsfRusage(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = &self->lsfRusage;
+    OUTPUT:
+	RETVAL
+
+int
+jsl3_reason(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = self->reason;
+    OUTPUT:
+	RETVAL
+
+int
+jsl3_idx(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+jsl3_subreasons(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = self->subreasons;
+    OUTPUT:
+	RETVAL
+
+int
+jsl3_jobId(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+time_t
+jsl3_endTime(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = self->endTime;
+    OUTPUT:
+	RETVAL
+
+float
+jsl3_cpuTime(self)
+	LSF_Batch_jobStatusLog *self
+    CODE:
+	RETVAL = self->cpuTime;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::sbdJobStatusLogPtr PREFIX = sjsl_
+
+int
+sjsl_actFlags(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->actFlags;
+    OUTPUT:
+	RETVAL
+
+int
+sjsl_reasons(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->reasons;
+    OUTPUT:
+	RETVAL
+
+int
+sjsl_jStatus(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->jStatus;
+    OUTPUT:
+	RETVAL
+
+int
+sjsl_actValue(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->actValue;
+    OUTPUT:
+	RETVAL
+
+int
+sjsl_idx(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+sjsl_subreasons(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->subreasons;
+    OUTPUT:
+	RETVAL
+
+time_t
+sjsl_actPeriod(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->actPeriod;
+    OUTPUT:
+	RETVAL
+
+int
+sjsl_jobId(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+sjsl_actSubReasons(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->actSubReasons;
+    OUTPUT:
+	RETVAL
+
+int
+sjsl_actPid(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->actPid;
+    OUTPUT:
+	RETVAL
+
+int
+sjsl_actStatus(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->actStatus;
+    OUTPUT:
+	RETVAL
+
+int
+sjsl_actReasons(self)
+	LSF_Batch_sbdJobStatusLog *self
+    CODE:
+	RETVAL = self->actReasons;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::sbdUnreportedStatusLogPtr PREFIX = susl_
+
+int
+susl_sigValue(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->sigValue;
+    OUTPUT:
+	RETVAL
+
+LSF_Batch_jRusage *
+susl_runRusage(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = &self->runRusage;
+    OUTPUT:
+	RETVAL
+
+char *
+susl_execHome(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->execHome;
+    OUTPUT:
+	RETVAL
+
+LSF_Batch_lsfRusage *
+susl_lsfRusage(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = &self->lsfRusage;
+    OUTPUT:
+	RETVAL
+
+int
+susl_reason(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->reason;
+    OUTPUT:
+	RETVAL
+
+int
+susl_execUid(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->execUid;
+    OUTPUT:
+	RETVAL
+
+int
+susl_idx(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+susl_msgId(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->msgId;
+    OUTPUT:
+	RETVAL
+
+int
+susl_jobPid(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->jobPid;
+    OUTPUT:
+	RETVAL
+
+char *
+susl_execCwd(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->execCwd;
+    OUTPUT:
+	RETVAL
+
+int
+susl_jobPGid(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->jobPGid;
+    OUTPUT:
+	RETVAL
+
+int
+susl_exitStatus(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->exitStatus;
+    OUTPUT:
+	RETVAL
+
+int
+susl_subreasons(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->subreasons;
+    OUTPUT:
+	RETVAL
+
+char *
+susl_execUsername(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->execUsername;
+    OUTPUT:
+	RETVAL
+
+int
+susl_newStatus(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->newStatus;
+    OUTPUT:
+	RETVAL
+
+int
+susl_jobId(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+susl_actPid(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->actPid;
+    OUTPUT:
+	RETVAL
+
+int
+susl_actStatus(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->actStatus;
+    OUTPUT:
+	RETVAL
+
+int
+susl_seq(self)
+	LSF_Batch_sbdUnreportedStatusLog *self
+    CODE:
+	RETVAL = self->seq;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobSwitchLogPtr PREFIX = jsl4_
+
+char *
+jsl4_queue(self)
+	LSF_Batch_jobSwitchLog *self
+    CODE:
+	RETVAL = self->queue;
+    OUTPUT:
+	RETVAL
+
+int
+jsl4_userId(self)
+	LSF_Batch_jobSwitchLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+int
+jsl4_jobId(self)
+	LSF_Batch_jobSwitchLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+jsl4_idx(self)
+	LSF_Batch_jobSwitchLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobMoveLogPtr PREFIX = jml2_
+
+int
+jml2_userId(self)
+	LSF_Batch_jobMoveLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+int
+jml2_jobId(self)
+	LSF_Batch_jobMoveLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+jml2_base(self)
+	LSF_Batch_jobMoveLog *self
+    CODE:
+	RETVAL = self->base;
+    OUTPUT:
+	RETVAL
+
+int
+jml2_position(self)
+	LSF_Batch_jobMoveLog *self
+    CODE:
+	RETVAL = self->position;
+    OUTPUT:
+	RETVAL
+
+int
+jml2_idx(self)
+	LSF_Batch_jobMoveLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::chkpntLogPtr PREFIX = cl_
+
+int
+cl_jobId(self)
+	LSF_Batch_chkpntLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+cl_flags(self)
+	LSF_Batch_chkpntLog *self
+    CODE:
+	RETVAL = self->flags;
+    OUTPUT:
+	RETVAL
+
+time_t
+cl_period(self)
+	LSF_Batch_chkpntLog *self
+    CODE:
+	RETVAL = self->period;
+    OUTPUT:
+	RETVAL
+
+int
+cl_idx(self)
+	LSF_Batch_chkpntLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+cl_ok(self)
+	LSF_Batch_chkpntLog *self
+    CODE:
+	RETVAL = self->ok;
+    OUTPUT:
+	RETVAL
+
+int
+cl_pid(self)
+	LSF_Batch_chkpntLog *self
+    CODE:
+	RETVAL = self->pid;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobRequeueLogPtr PREFIX = jrl_
+
+int
+jrl_jobId(self)
+	LSF_Batch_jobRequeueLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+jrl_idx(self)
+	LSF_Batch_jobRequeueLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobCleanLogPtr PREFIX = jcl2_
+
+int
+jcl2_jobId(self)
+	LSF_Batch_jobCleanLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+jcl2_idx(self)
+	LSF_Batch_jobCleanLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobExceptionLogPtr PREFIX = jel2_
+
+int
+jel2_exceptMask(self)
+	LSF_Batch_jobExceptionLog *self
+    CODE:
+	RETVAL = self->exceptMask;
+    OUTPUT:
+	RETVAL
+
+int
+jel2_jobId(self)
+	LSF_Batch_jobExceptionLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+jel2_exceptInfo(self)
+	LSF_Batch_jobExceptionLog *self
+    CODE:
+	RETVAL = self->exceptInfo;
+    OUTPUT:
+	RETVAL
+
+time_t
+jel2_timeEvent(self)
+	LSF_Batch_jobExceptionLog *self
+    CODE:
+	RETVAL = self->timeEvent;
+    OUTPUT:
+	RETVAL
+
+int
+jel2_actMask(self)
+	LSF_Batch_jobExceptionLog *self
+    CODE:
+	RETVAL = self->actMask;
+    OUTPUT:
+	RETVAL
+
+int
+jel2_idx(self)
+	LSF_Batch_jobExceptionLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::sigactLogPtr PREFIX = sl_
+
+int
+sl_reasons(self)
+	LSF_Batch_sigactLog *self
+    CODE:
+	RETVAL = self->reasons;
+    OUTPUT:
+	RETVAL
+
+int
+sl_jStatus(self)
+	LSF_Batch_sigactLog *self
+    CODE:
+	RETVAL = self->jStatus;
+    OUTPUT:
+	RETVAL
+
+char *
+sl_signalSymbol(self)
+	LSF_Batch_sigactLog *self
+    CODE:
+	RETVAL = self->signalSymbol;
+    OUTPUT:
+	RETVAL
+
+int
+sl_flags(self)
+	LSF_Batch_sigactLog *self
+    CODE:
+	RETVAL = self->flags;
+    OUTPUT:
+	RETVAL
+
+time_t
+sl_period(self)
+	LSF_Batch_sigactLog *self
+    CODE:
+	RETVAL = self->period;
+    OUTPUT:
+	RETVAL
+
+int
+sl_idx(self)
+	LSF_Batch_sigactLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+sl_jobId(self)
+	LSF_Batch_sigactLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+sl_actStatus(self)
+	LSF_Batch_sigactLog *self
+    CODE:
+	RETVAL = self->actStatus;
+    OUTPUT:
+	RETVAL
+
+int
+sl_pid(self)
+	LSF_Batch_sigactLog *self
+    CODE:
+	RETVAL = self->pid;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::migLogPtr PREFIX = ml_
+
+int
+ml_userId(self)
+	LSF_Batch_migLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+char *
+ml_askedHosts(self)
+	LSF_Batch_migLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < self->numAskedHosts; i++)
+          XPUSHs(sv_2mortal(newSVpv(self->askedHosts[i],0)));	
+	XSRETURN(self->numAskedHosts);
+
+int
+ml_jobId(self)
+	LSF_Batch_migLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+ml_numAskedHosts(self)
+	LSF_Batch_migLog *self
+    CODE:
+	RETVAL = self->numAskedHosts;
+    OUTPUT:
+	RETVAL
+
+int
+ml_idx(self)
+	LSF_Batch_migLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::signalLogPtr PREFIX = sl2_
+
+int
+sl2_userId(self)
+	LSF_Batch_signalLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+char *
+sl2_signalSymbol(self)
+	LSF_Batch_signalLog *self
+    CODE:
+	RETVAL = self->signalSymbol;
+    OUTPUT:
+	RETVAL
+
+int
+sl2_jobId(self)
+	LSF_Batch_signalLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+sl2_runCount(self)
+	LSF_Batch_signalLog *self
+    CODE:
+	RETVAL = self->runCount;
+    OUTPUT:
+	RETVAL
+
+int
+sl2_idx(self)
+	LSF_Batch_signalLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::queueCtrlLogPtr PREFIX = qcl_
+
+int
+qcl_userId(self)
+	LSF_Batch_queueCtrlLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+char *
+qcl_queue(self)
+	LSF_Batch_queueCtrlLog *self
+    CODE:
+	RETVAL = self->queue;
+    OUTPUT:
+	RETVAL
+
+int
+qcl_opCode(self)
+	LSF_Batch_queueCtrlLog *self
+    CODE:
+	RETVAL = self->opCode;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::newDebugLogPtr PREFIX = ndl_
+
+int
+ndl_userId(self)
+	LSF_Batch_newDebugLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+int
+ndl_logclass(self)
+	LSF_Batch_newDebugLog *self
+    CODE:
+	RETVAL = self->logclass;
+    OUTPUT:
+	RETVAL
+
+int
+ndl_level(self)
+	LSF_Batch_newDebugLog *self
+    CODE:
+	RETVAL = self->level;
+    OUTPUT:
+	RETVAL
+
+int
+ndl_turnOff(self)
+	LSF_Batch_newDebugLog *self
+    CODE:
+	RETVAL = self->turnOff;
+    OUTPUT:
+	RETVAL
+
+int
+ndl_opCode(self)
+	LSF_Batch_newDebugLog *self
+    CODE:
+	RETVAL = self->opCode;
+    OUTPUT:
+	RETVAL
+
+char *
+ndl_logFileName(self)
+	LSF_Batch_newDebugLog *self
+    CODE:
+	RETVAL = self->logFileName;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::hostCtrlLogPtr PREFIX = hcl_
+
+int
+hcl_userId(self)
+	LSF_Batch_hostCtrlLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+int
+hcl_opCode(self)
+	LSF_Batch_hostCtrlLog *self
+    CODE:
+	RETVAL = self->opCode;
+    OUTPUT:
+	RETVAL
+
+char *
+hcl_host(self)
+	LSF_Batch_hostCtrlLog *self
+    CODE:
+	RETVAL = self->host;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::mbdStartLogPtr PREFIX = msl_
+
+char *
+msl_cluster(self)
+	LSF_Batch_mbdStartLog *self
+    CODE:
+	RETVAL = self->cluster;
+    OUTPUT:
+	RETVAL
+
+char *
+msl_master(self)
+	LSF_Batch_mbdStartLog *self
+    CODE:
+	RETVAL = self->master;
+    OUTPUT:
+	RETVAL
+
+int
+msl_numHosts(self)
+	LSF_Batch_mbdStartLog *self
+    CODE:
+	RETVAL = self->numHosts;
+    OUTPUT:
+	RETVAL
+
+int
+msl_numQueues(self)
+	LSF_Batch_mbdStartLog *self
+    CODE:
+	RETVAL = self->numQueues;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::mbdDieLogPtr PREFIX = mdl_
+
+int
+mdl_exitCode(self)
+	LSF_Batch_mbdDieLog *self
+    CODE:
+	RETVAL = self->exitCode;
+    OUTPUT:
+	RETVAL
+
+char *
+mdl_master(self)
+	LSF_Batch_mbdDieLog *self
+    CODE:
+	RETVAL = self->master;
+    OUTPUT:
+	RETVAL
+
+int
+mdl_numRemoveJobs(self)
+	LSF_Batch_mbdDieLog *self
+    CODE:
+	RETVAL = self->numRemoveJobs;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::unfulfillLogPtr PREFIX = ul_
+
+int
+ul_sig1(self)
+	LSF_Batch_unfulfillLog *self
+    CODE:
+	RETVAL = self->sig1;
+    OUTPUT:
+	RETVAL
+
+int
+ul_jobId(self)
+	LSF_Batch_unfulfillLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+time_t
+ul_chkPeriod(self)
+	LSF_Batch_unfulfillLog *self
+    CODE:
+	RETVAL = self->chkPeriod;
+    OUTPUT:
+	RETVAL
+
+int
+ul_sig(self)
+	LSF_Batch_unfulfillLog *self
+    CODE:
+	RETVAL = self->sig;
+    OUTPUT:
+	RETVAL
+
+int
+ul_idx(self)
+	LSF_Batch_unfulfillLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+ul_notSwitched(self)
+	LSF_Batch_unfulfillLog *self
+    CODE:
+	RETVAL = self->notSwitched;
+    OUTPUT:
+	RETVAL
+
+int
+ul_sig1Flags(self)
+	LSF_Batch_unfulfillLog *self
+    CODE:
+	RETVAL = self->sig1Flags;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobFinishLogPtr PREFIX = jfl_
+
+char *
+jfl_cwd(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->cwd;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_options(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->options;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_preExecCmd(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->preExecCmd;
+    OUTPUT:
+	RETVAL
+
+time_t
+jfl_startTime(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->startTime;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_numProcessors(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->numProcessors;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_fromHost(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->fromHost;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_numAskedHosts(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->numAskedHosts;
+    OUTPUT:
+	RETVAL
+
+time_t
+jfl_endTime(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->endTime;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_jobFile(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->jobFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_errFile(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->errFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_projectName(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->projectName;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_outFile(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->outFile;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_exitStatus(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->exitStatus;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_maxRMem(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->maxRMem;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_maxRSwap(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->maxRSwap;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_resReq(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->resReq;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_queue(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->queue;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_userName(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->userName;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_jobId(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_loginShell(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->loginShell;
+    OUTPUT:
+	RETVAL
+
+void
+jfl_execHosts(self)
+	LSF_Batch_jobFinishLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < self->numExHosts; i++)
+          XPUSHs(sv_2mortal(newSVpv(self->execHosts[i],0)));	
+	XSRETURN(self->numExHosts);
+
+float
+jfl_cpuTime(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->cpuTime;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_maxNumProcessors(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->maxNumProcessors;
+    OUTPUT:
+	RETVAL
+
+LSF_Batch_lsfRusage *
+jfl_lsfRusage(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = &self->lsfRusage;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_timeEvent(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->timeEvent;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_mailUser(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->mailUser;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_idx(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+time_t
+jfl_submitTime(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->submitTime;
+    OUTPUT:
+	RETVAL
+
+time_t
+jfl_beginTime(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->beginTime;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_jStatus(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->jStatus;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_userId(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_askedHosts(self)
+	LSF_Batch_jobFinishLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < self->numAskedHosts; i++)
+          XPUSHs(sv_2mortal(newSVpv(self->askedHosts[i],0)));	
+	XSRETURN(self->numAskedHosts);
+
+time_t
+jfl_termTime(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->termTime;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_inFileSpool(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->inFileSpool;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_dependCond(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->dependCond;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_jobName(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->jobName;
+    OUTPUT:
+	RETVAL
+
+float
+jfl_hostFactor(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->hostFactor;
+    OUTPUT:
+	RETVAL
+
+int
+jfl_numExHosts(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->numExHosts;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_command(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->command;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_inFile(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->inFile;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl_commandSpool(self)
+	LSF_Batch_jobFinishLog *self
+    CODE:
+	RETVAL = self->commandSpool;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::loadIndexLogPtr PREFIX = lil_
+
+char *
+lil_name(self)
+	LSF_Batch_loadIndexLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < self->nIdx; i++)
+          XPUSHs(sv_2mortal(newSVpv(self->name[i],0)));	
+	XSRETURN(self->nIdx);
+
+int
+lil_nIdx(self)
+	LSF_Batch_loadIndexLog *self
+    CODE:
+	RETVAL = self->nIdx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::calendarLogPtr PREFIX = cl2_
+
+int
+cl2_userId(self)
+	LSF_Batch_calendarLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+char *
+cl2_calExpr(self)
+	LSF_Batch_calendarLog *self
+    CODE:
+	RETVAL = self->calExpr;
+    OUTPUT:
+	RETVAL
+
+char *
+cl2_desc(self)
+	LSF_Batch_calendarLog *self
+    CODE:
+	RETVAL = self->desc;
+    OUTPUT:
+	RETVAL
+
+int
+cl2_options(self)
+	LSF_Batch_calendarLog *self
+    CODE:
+	RETVAL = self->options;
+    OUTPUT:
+	RETVAL
+
+char *
+cl2_name(self)
+	LSF_Batch_calendarLog *self
+    CODE:
+	RETVAL = self->name;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobForwardLogPtr PREFIX = jfl2_
+
+char *
+jfl2_reserHosts(self)
+	LSF_Batch_jobForwardLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < self->numReserHosts; i++)
+          XPUSHs(sv_2mortal(newSVpv(self->reserHosts[i],0)));	
+	XSRETURN(self->numReserHosts);
+
+int
+jfl2_jobId(self)
+	LSF_Batch_jobForwardLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+char *
+jfl2_cluster(self)
+	LSF_Batch_jobForwardLog *self
+    CODE:
+	RETVAL = self->cluster;
+    OUTPUT:
+	RETVAL
+
+int
+jfl2_numReserHosts(self)
+	LSF_Batch_jobForwardLog *self
+    CODE:
+	RETVAL = self->numReserHosts;
+    OUTPUT:
+	RETVAL
+
+int
+jfl2_idx(self)
+	LSF_Batch_jobForwardLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobAcceptLogPtr PREFIX = jal_
+
+LSF_Batch_job *
+jal_remoteJid(self)
+	LSF_Batch_jobAcceptLog *self
+    CODE:
+	RETVAL = (LSF_Batch_job *)safemalloc(sizeof(LSF_Batch_job));
+	RETVAL->jobId = LSB_ARRAY_JOBID(self->remoteJid);
+	RETVAL->arrayIdx = LSB_ARRAY_IDX(self->remoteJid);
+    OUTPUT:
+	RETVAL
+
+int
+jal_jobId(self)
+	LSF_Batch_jobAcceptLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+char *
+jal_cluster(self)
+	LSF_Batch_jobAcceptLog *self
+    CODE:
+	RETVAL = self->cluster;
+    OUTPUT:
+	RETVAL
+
+int
+jal_idx(self)
+	LSF_Batch_jobAcceptLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::statusAckLogPtr PREFIX = sal_
+
+int
+sal_jobId(self)
+	LSF_Batch_statusAckLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+sal_idx(self)
+	LSF_Batch_statusAckLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+sal_statusNum(self)
+	LSF_Batch_statusAckLog *self
+    CODE:
+	RETVAL = self->statusNum;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobMsgLogPtr PREFIX = jml3_
+
+int
+jml3_usrId(self)
+	LSF_Batch_jobMsgLog *self
+    CODE:
+	RETVAL = self->usrId;
+    OUTPUT:
+	RETVAL
+
+int
+jml3_idx(self)
+	LSF_Batch_jobMsgLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+char *
+jml3_dest(self)
+	LSF_Batch_jobMsgLog *self
+    CODE:
+	RETVAL = self->dest;
+    OUTPUT:
+	RETVAL
+
+int
+jml3_msgId(self)
+	LSF_Batch_jobMsgLog *self
+    CODE:
+	RETVAL = self->msgId;
+    OUTPUT:
+	RETVAL
+
+int
+jml3_jobId(self)
+	LSF_Batch_jobMsgLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+char *
+jml3_src(self)
+	LSF_Batch_jobMsgLog *self
+    CODE:
+	RETVAL = self->src;
+    OUTPUT:
+	RETVAL
+
+int
+jml3_type(self)
+	LSF_Batch_jobMsgLog *self
+    CODE:
+	RETVAL = self->type;
+    OUTPUT:
+	RETVAL
+
+char *
+jml3_msg(self)
+	LSF_Batch_jobMsgLog *self
+    CODE:
+	RETVAL = self->msg;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobMsgAckLogPtr PREFIX = jmal_
+
+int
+jmal_usrId(self)
+	LSF_Batch_jobMsgAckLog *self
+    CODE:
+	RETVAL = self->usrId;
+    OUTPUT:
+	RETVAL
+
+int
+jmal_idx(self)
+	LSF_Batch_jobMsgAckLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+char *
+jmal_dest(self)
+	LSF_Batch_jobMsgAckLog *self
+    CODE:
+	RETVAL = self->dest;
+    OUTPUT:
+	RETVAL
+
+int
+jmal_msgId(self)
+	LSF_Batch_jobMsgAckLog *self
+    CODE:
+	RETVAL = self->msgId;
+    OUTPUT:
+	RETVAL
+
+int
+jmal_jobId(self)
+	LSF_Batch_jobMsgAckLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+char *
+jmal_src(self)
+	LSF_Batch_jobMsgAckLog *self
+    CODE:
+	RETVAL = self->src;
+    OUTPUT:
+	RETVAL
+
+int
+jmal_type(self)
+	LSF_Batch_jobMsgAckLog *self
+    CODE:
+	RETVAL = self->type;
+    OUTPUT:
+	RETVAL
+
+char *
+jmal_msg(self)
+	LSF_Batch_jobMsgAckLog *self
+    CODE:
+	RETVAL = self->msg;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobOccupyReqLogPtr PREFIX = jorl_
+
+int
+jorl_numOccupyRequests(self)
+	LSF_Batch_jobOccupyReqLog *self
+    CODE:
+	RETVAL = self->numOccupyRequests;
+    OUTPUT:
+	RETVAL
+
+int
+jorl_userId(self)
+	LSF_Batch_jobOccupyReqLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+int
+jorl_jobId(self)
+	LSF_Batch_jobOccupyReqLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+void *
+jorl_occupyReqList(self)
+	LSF_Batch_jobOccupyReqLog *self
+    CODE:
+	RETVAL = self->occupyReqList;
+    OUTPUT:
+	RETVAL
+
+int
+jorl_idx(self)
+	LSF_Batch_jobOccupyReqLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobVacatedLogPtr PREFIX = jvl_
+
+int
+jvl_userId(self)
+	LSF_Batch_jobVacatedLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+int
+jvl_jobId(self)
+	LSF_Batch_jobVacatedLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+jvl_idx(self)
+	LSF_Batch_jobVacatedLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobForceRequestLogPtr PREFIX = jfrl_
+
+int
+jfrl_userId(self)
+	LSF_Batch_jobForceRequestLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+int
+jfrl_jobId(self)
+	LSF_Batch_jobForceRequestLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+int
+jfrl_numExecHosts(self)
+	LSF_Batch_jobForceRequestLog *self
+    CODE:
+	RETVAL = self->numExecHosts;
+    OUTPUT:
+	RETVAL
+
+int
+jfrl_options(self)
+	LSF_Batch_jobForceRequestLog *self
+    CODE:
+	RETVAL = self->options;
+    OUTPUT:
+	RETVAL
+
+int
+jfrl_idx(self)
+	LSF_Batch_jobForceRequestLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+char**
+jfrl_execHosts(self)
+	LSF_Batch_jobForceRequestLog *self
+    CODE:
+	RETVAL = self->execHosts;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobChunkLogPtr PREFIX = jcl3_
+
+void
+jcl3_membJobId(self)
+	LSF_Batch_jobChunkLog *self
+    PREINIT:
+	LS_LONG_INT id;
+	int i;
+	LSF_Batch_job *j;
+	SV *rv;
+    PPCODE:
+	for( i = 0; i < self->membSize; i++){
+	   j = (LSF_Batch_job *)safemalloc(sizeof(LSF_Batch_job));
+	   j->jobId = LSB_ARRAY_JOBID(id);
+	   j->arrayIdx = LSB_ARRAY_IDX(id);
+	   rv = newRV_inc(&PL_sv_undef);
+	   sv_setref_iv(rv, "LSF::Batch::jobPtr", (IV)&j);
+	   XPUSHs(sv_2mortal(rv));
+	}
+	XSRETURN(self->membSize);
+
+long
+jcl3_numExHosts(self)
+	LSF_Batch_jobChunkLog *self
+    CODE:
+	RETVAL = self->numExHosts;
+    OUTPUT:
+	RETVAL
+
+long
+jcl3_membSize(self)
+	LSF_Batch_jobChunkLog *self
+    CODE:
+	RETVAL = self->membSize;
+    OUTPUT:
+	RETVAL
+
+void
+jcl3_execHosts(self)
+	LSF_Batch_jobChunkLog *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for( i = 0; i < self->numExHosts; i++)
+          XPUSHs(sv_2mortal(newSVpv(self->execHosts[i],0)));	
+	XSRETURN(self->numExHosts);
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobExternalMsgLogPtr PREFIX = jeml_
+
+int
+jeml_userId(self)
+	LSF_Batch_jobExternalMsgLog *self
+    CODE:
+	RETVAL = self->userId;
+    OUTPUT:
+	RETVAL
+
+int
+jeml_jobId(self)
+	LSF_Batch_jobExternalMsgLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+char *
+jeml_fileName(self)
+	LSF_Batch_jobExternalMsgLog *self
+    CODE:
+	RETVAL = self->fileName;
+    OUTPUT:
+	RETVAL
+
+int
+jeml_dataStatus(self)
+	LSF_Batch_jobExternalMsgLog *self
+    CODE:
+	RETVAL = self->dataStatus;
+    OUTPUT:
+	RETVAL
+
+time_t
+jeml_postTime(self)
+	LSF_Batch_jobExternalMsgLog *self
+    CODE:
+	RETVAL = self->postTime;
+    OUTPUT:
+	RETVAL
+
+char *
+jeml_desc(self)
+	LSF_Batch_jobExternalMsgLog *self
+    CODE:
+	RETVAL = self->desc;
+    OUTPUT:
+	RETVAL
+
+long
+jeml_dataSize(self)
+	LSF_Batch_jobExternalMsgLog *self
+    CODE:
+	RETVAL = self->dataSize;
+    OUTPUT:
+	RETVAL
+
+int
+jeml_idx(self)
+	LSF_Batch_jobExternalMsgLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+jeml_msgIdx(self)
+	LSF_Batch_jobExternalMsgLog *self
+    CODE:
+	RETVAL = self->msgIdx;
+    OUTPUT:
+	RETVAL
+
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobAttrSetLogPtr PREFIX = jasl_
+
+int
+jasl_jobId(self)
+	LSF_Batch_jobAttrSetLog *self
+    CODE:
+	RETVAL = self->jobId;
+    OUTPUT:
+	RETVAL
+
+char *
+jasl_hostname(self)
+	LSF_Batch_jobAttrSetLog *self
+    CODE:
+	RETVAL = self->hostname;
+    OUTPUT:
+	RETVAL
+
+int
+jasl_port(self)
+	LSF_Batch_jobAttrSetLog *self
+    CODE:
+	RETVAL = self->port;
+    OUTPUT:
+	RETVAL
+
+int
+jasl_idx(self)
+	LSF_Batch_jobAttrSetLog *self
+    CODE:
+	RETVAL = self->idx;
+    OUTPUT:
+	RETVAL
+
+int
+jasl_uid(self)
+	LSF_Batch_jobAttrSetLog *self
+    CODE:
+	RETVAL = self->uid;
+    OUTPUT:
+	RETVAL
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::lsfRusagePtr PREFIX = lr_
+
+double
+lr_ru_utime(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_utime;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_stime(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_stime;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_maxrss(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_maxrss;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_ixrss(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_ixrss;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_ismrss(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_ismrss;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_idrss(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_idrss;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_isrss(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_isrss;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_minflt(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_minflt;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_majflt(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_majflt;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_nswap(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_nswap;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_inblock(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_inblock;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_oublock(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_oublock;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_ioch(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_ioch;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_msgsnd(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_msgsnd;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_msgrcv(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_msgrcv;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_nsignals(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_nsignals;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_nvcsw(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_nvcsw;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_nivcsw(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_nivcsw;
+    OUTPUT:
+	RETVAL
+
+double
+lr_ru_exutime(self)
+	LSF_Batch_lsfRusage *self
+    CODE:
+        RETVAL = self->ru_exutime;
+    OUTPUT:
+	RETVAL
+
+
+

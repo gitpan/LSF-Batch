@@ -4,6 +4,7 @@ extern "C" {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "ppport.h"
 #include "Av_CharPtrPtr.h"  /* XS_*_charPtrPtr() */
 #ifdef __cplusplus
 }
@@ -51,7 +52,7 @@ XS_unpack_charPtrPtr( rv )
 	if( s[x] == NULL )
 	  warn("XS_unpack_charPtrPtr: unable to malloc char*");
 	else
-	  strcpy( s[x], SvPV( *ssv, na ) );
+	  strcpy( s[x], SvPV( *ssv, PL_na ) );
       }
 /*      else
         warn("XS_unpack_charPtrPtr: array elem %d was not a string.", x );*/

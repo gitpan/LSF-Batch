@@ -6,7 +6,7 @@ unless ($ENV{'LSF_ENVDIR'}) {
   $ENV{'LSF_ENVDIR'} = prompt("Directory containing lsf.conf file for this machine:","/usr/local/lsf/etc");
 }
 
-my $lsfConf = "$ENV{LSF_ENVDIR}/lsf.conf";
+my $lsfConf = $ENV{LSF_ENVDIR}."/lsf.conf";
 
 die "Cannot find lsf.conf file in $ENV{LSF_ENVDIR}\n" unless (-r $lsfConf);
 
@@ -25,15 +25,17 @@ $os = `uname`;
 warn "Found OS=$os\n";
 
 for($os){
+  /OSF1/ && do{$libs = "-L$lsfLib -llsf -lbat -lmach -lmld";};
   /AIX/ && do{$libs = "-L$lsfLib -llsf -lbat -lbsd";};
-  /SunOS/ && do{$libs = "-L$lsfLib -lbat -llsf -lnsl -lsocket";};
+  /SunOS/ && do{$libs = "-L$lsfLib -lbat -llsf -lnsl -lsocket -lrpcsvc -lgen -ldl";};
+  /Linux/ && do{$libs = "-L$lsfLib -lbat -llsf";};
 }
 
 WriteMakefile(
     'NAME'	=> 'LSF::Batch',
     'VERSION_FROM' => 'Batch.pm',
     'LIBS'	=> [$libs],
-    'DEFINE'	=> '',
+    'DEFINE'	=> '-DPERL_POLLUTE',
     'OBJECT'	=> '$(O_FILES)',
     'INC'	=> "-I$lsfInc"
 );
