@@ -29,6 +29,9 @@ T_PTROBJ_SPECIAL
         IV tmp = SvIV((SV*)SvRV($arg));
         $var = ($type) tmp;
     }
+    else if( $arg == &sv_undef ){
+	$var = ($type)NULL;
+    }
     else
         croak(\"$var is not of type ${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")
 

@@ -673,7 +673,7 @@ use DynaLoader;
         IS_POST_ERR
         IS_POST_FINISH
 );
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 sub AUTOLOAD {
   # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -724,7 +724,7 @@ sub LSB_ISBUSYON{ my ($st, $in) = @_; (($st[$in/&INTEGER_BITS]) &
 sub IS_PEND{my ($s) = @_;($s & &JOB_STAT_PEND) || ($s & &JOB_STAT_PSUSP);}
 sub IS_START{my ($s) = @_;($s & &JOB_STAT_RUN) || ($s & &JOB_STAT_SSUSP)
 	       || ($s & &JOB_STAT_USUSP);}
-sub IS_FINISH{my ($s) = @_; ($s & JOB_STAT_DONE) || ($s & &JOB_STAT_EXIT);}
+sub IS_FINISH{my ($s) = @_; ($s & &JOB_STAT_DONE) || ($s & &JOB_STAT_EXIT);}
 sub IS_SUSP{my ($s) = @_; return ($s & &JOB_STAT_PSUSP) || ($s & &JOB_STAT_SSUSP)
 	      || ($s & &JOB_STAT_USUSP);}
 
@@ -770,6 +770,7 @@ sub submit{
   PARSE:
     while(@_){
       $_ = shift;
+      #print "got flag $_\n";
       die "invalid argument $_ \n" unless /^-/;
       if( @_ and @_[0] !~ /^-/ ){
 	$subreq{$_} = shift;

@@ -1,6 +1,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifdef sun
+#include "netdb.h"
+#endif
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -3922,7 +3925,7 @@ not_there:
 
 int
 set_jobname( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_JOB_NAME ){
     SET_LSB_ERRMSG_TO("Job Name can only be specified once");
@@ -3935,7 +3938,7 @@ set_jobname( struct submit *s, char *key, SV* value ){
 
 int
 set_queue( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_QUEUE ){
     SET_LSB_ERRMSG_TO("Queue can only be specified once");
@@ -3948,7 +3951,7 @@ set_queue( struct submit *s, char *key, SV* value ){
 
 int
 set_resreq( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_RES_REQ ){
     SET_LSB_ERRMSG_TO("Resource requirements can only be specified once");
@@ -3962,7 +3965,7 @@ set_resreq( struct submit *s, char *key, SV* value ){
 
 int
 set_hosts( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
   char **hosts;
 
   if( s->options & SUB_HOST ){
@@ -4001,7 +4004,7 @@ set_hosts( struct submit *s, char *key, SV* value ){
 
 int
 set_memlimit( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->rLimits[LSF_RLIMIT_RSS] != -1 ){
     SET_LSB_ERRMSG_TO("memlimit can only be specified once");
@@ -4013,7 +4016,7 @@ set_memlimit( struct submit *s, char *key, SV* value ){
 
 int
 set_cpulimit( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->rLimits[LSF_RLIMIT_CPU] != -1 ){
     SET_LSB_ERRMSG_TO("cpulimit can only be specified once");
@@ -4025,7 +4028,7 @@ set_cpulimit( struct submit *s, char *key, SV* value ){
 
 int
 set_filelimit( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->rLimits[LSF_RLIMIT_FSIZE] != -1 ){
     SET_LSB_ERRMSG_TO("filelimit can only be specified once");
@@ -4037,7 +4040,7 @@ set_filelimit( struct submit *s, char *key, SV* value ){
 
 int
 set_datalimit( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->rLimits[LSF_RLIMIT_DATA] != -1 ){
     SET_LSB_ERRMSG_TO("datalimit can only be specified once");
@@ -4048,7 +4051,7 @@ set_datalimit( struct submit *s, char *key, SV* value ){
 
 int
 set_stacklimit( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->rLimits[LSF_RLIMIT_STACK] != -1 ){
     SET_LSB_ERRMSG_TO("stacklimit can only be specified once");
@@ -4060,7 +4063,7 @@ set_stacklimit( struct submit *s, char *key, SV* value ){
 
 int
 set_corelimit( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->rLimits[LSF_RLIMIT_CORE] != -1 ){
     SET_LSB_ERRMSG_TO("corelimit can only be specified once");
@@ -4072,7 +4075,7 @@ set_corelimit( struct submit *s, char *key, SV* value ){
 
 int
 set_runlimit( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->rLimits[LSF_RLIMIT_RUN] != -1 ){
     SET_LSB_ERRMSG_TO("runlimit can only be specified once");
@@ -4084,7 +4087,7 @@ set_runlimit( struct submit *s, char *key, SV* value ){
 
 int
 set_processlimit( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->rLimits[LSF_RLIMIT_PROCESS] != -1 ){
     SET_LSB_ERRMSG_TO("processlimit can only be specified once");
@@ -4096,19 +4099,20 @@ set_processlimit( struct submit *s, char *key, SV* value ){
 
 int
 set_mailuser( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->mailUser ){
     SET_LSB_ERRMSG_TO("mail user can only be specified once");
     return -1;
   }
   s->mailUser = (char*)SvPV(value, len);
+  s->options |= SUB_MAIL_USER;
   return 0;
 }
 
 int
 set_maxprocs( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->maxNumProcessors ){
     SET_LSB_ERRMSG_TO("max processors can only be specified once");
@@ -4120,7 +4124,7 @@ set_maxprocs( struct submit *s, char *key, SV* value ){
 
 int
 set_hostspec( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_HOST_SPEC ){
     SET_LSB_ERRMSG_TO("hostspec can only be specified once");
@@ -4133,7 +4137,7 @@ set_hostspec( struct submit *s, char *key, SV* value ){
 
 int
 set_hold( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options2 & SUB2_HOLD ){
     SET_LSB_ERRMSG_TO("hold can only be specified once");
@@ -4145,7 +4149,7 @@ set_hold( struct submit *s, char *key, SV* value ){
 
 int
 set_rerunnable( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_RERUNNABLE ){
     SET_LSB_ERRMSG_TO("rerunnable can only be specified once");
@@ -4157,7 +4161,7 @@ set_rerunnable( struct submit *s, char *key, SV* value ){
 
 int
 set_restartforce( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_RESTART_FORCE ){
     SET_LSB_ERRMSG_TO("restart force can only be specified once");
@@ -4169,7 +4173,7 @@ set_restartforce( struct submit *s, char *key, SV* value ){
 
 int
 set_command( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->command ){
     SET_LSB_ERRMSG_TO("command can only be specified once");
@@ -4181,7 +4185,7 @@ set_command( struct submit *s, char *key, SV* value ){
 
 int 
 set_checkpointperiod( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_CHKPNT_PERIOD ){
     SET_LSB_ERRMSG_TO("checkpoint period can only be specified once");
@@ -4194,7 +4198,7 @@ set_checkpointperiod( struct submit *s, char *key, SV* value ){
 
 int
 set_checkpointable( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_CHKPNTABLE ){
     SET_LSB_ERRMSG_TO("checkpointable can only be specified once");
@@ -4218,7 +4222,7 @@ set_checkpointcopy( struct submit *s, char *key, SV* value ){
 
 int
 set_checkpointforce( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_CHKPNT_FORCE ){
     SET_LSB_ERRMSG_TO("checkpoint force can only be specified once");
@@ -4299,7 +4303,7 @@ int set_xfile(struct xFile *xf, char *operation){
 }
 
 int set_transfer( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
   char *command;
 
   if(s->options & SUB_OTHER_FILES)
@@ -4316,7 +4320,6 @@ int set_transfer( struct submit *s, char *key, SV* value ){
     if( set_xfile(s->xf, command) < 0 )
       return -1;
     s->nxf = 1;
-    s->options |= SUB_HOST;
   }
   else if( SvROK(value) && SvTYPE(SvRV(value)) == SVt_PVAV ){
     AV* array;
@@ -4341,7 +4344,7 @@ int set_transfer( struct submit *s, char *key, SV* value ){
 }
 
 int set_dependcond( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_DEPEND_COND ){
     SET_LSB_ERRMSG_TO("dependency condition can only be specified once");
@@ -4353,7 +4356,7 @@ int set_dependcond( struct submit *s, char *key, SV* value ){
 }
 
 int set_begintime( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->beginTime ){
     SET_LSB_ERRMSG_TO("begin time can only be specified once");
@@ -4364,7 +4367,7 @@ int set_begintime( struct submit *s, char *key, SV* value ){
 }
 
 int set_termtime( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
   time_t val;
 
   if( s->termTime ){
@@ -4376,7 +4379,7 @@ int set_termtime( struct submit *s, char *key, SV* value ){
 }
 
 int set_block( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options2 & SUB2_BSUB_BLOCK ){
     SET_LSB_ERRMSG_TO("block can only be specified once");
@@ -4387,7 +4390,7 @@ int set_block( struct submit *s, char *key, SV* value ){
 }
 
 int set_infile( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_IN_FILE ){
     SET_LSB_ERRMSG_TO("input file can only be specified once");
@@ -4399,7 +4402,7 @@ int set_infile( struct submit *s, char *key, SV* value ){
 }
 
 int set_outfile( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_OUT_FILE ){
     SET_LSB_ERRMSG_TO("output file can only be specified once");
@@ -4411,7 +4414,7 @@ int set_outfile( struct submit *s, char *key, SV* value ){
 }
 
 int set_errfile( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_ERR_FILE ){
     SET_LSB_ERRMSG_TO("error file can only be specified once");
@@ -4423,7 +4426,7 @@ int set_errfile( struct submit *s, char *key, SV* value ){
 }
 
 int set_interactive( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_INTERACTIVE ){
     SET_LSB_ERRMSG_TO("interactive can only be specified once");
@@ -4434,7 +4437,7 @@ int set_interactive( struct submit *s, char *key, SV* value ){
 }
 
 int set_interactive_pty( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_PTY ){
     SET_LSB_ERRMSG_TO("pty can only be specified once");
@@ -4445,7 +4448,7 @@ int set_interactive_pty( struct submit *s, char *key, SV* value ){
 }
 
 int set_interactive_shell( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_PTY_SHELL ){
     SET_LSB_ERRMSG_TO("pty shell can only be specified once");
@@ -4456,7 +4459,7 @@ int set_interactive_shell( struct submit *s, char *key, SV* value ){
 }
 
 int set_exclusive( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_EXCLUSIVE ){
     SET_LSB_ERRMSG_TO("exclusive can only be specified once");
@@ -4467,7 +4470,7 @@ int set_exclusive( struct submit *s, char *key, SV* value ){
 }
 
 int set_preexec( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_PRE_EXEC ){
     SET_LSB_ERRMSG_TO("preexec can only be specified once");
@@ -4479,7 +4482,7 @@ int set_preexec( struct submit *s, char *key, SV* value ){
 }
 
 int set_usergroup( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->userGroup ){
     SET_LSB_ERRMSG_TO("user group can only be specified once");
@@ -4490,7 +4493,7 @@ int set_usergroup( struct submit *s, char *key, SV* value ){
 }
 
 int set_projectname( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->projectName ){
     SET_LSB_ERRMSG_TO("project name can only be specified once");
@@ -4501,7 +4504,7 @@ int set_projectname( struct submit *s, char *key, SV* value ){
 }
 
 int set_numprocessors( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->numProcessors != 1){
     SET_LSB_ERRMSG_TO("num procs can only be specified once");
@@ -4512,7 +4515,7 @@ int set_numprocessors( struct submit *s, char *key, SV* value ){
 }
 
 int set_sigvalue( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->sigValue ){
     SET_LSB_ERRMSG_TO("sigvalue can only be specified once");
@@ -4523,7 +4526,7 @@ int set_sigvalue( struct submit *s, char *key, SV* value ){
 }
 
 int set_notifybegin( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_NOTIFY_BEGIN ){
     SET_LSB_ERRMSG_TO("notify begin can only be specified once");
@@ -4534,7 +4537,7 @@ int set_notifybegin( struct submit *s, char *key, SV* value ){
 }
 
 int set_notifyend( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_NOTIFY_END ){
     SET_LSB_ERRMSG_TO("notify end can only be specified once");
@@ -4545,7 +4548,7 @@ int set_notifyend( struct submit *s, char *key, SV* value ){
 }
 
 int set_loginshell( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
 
   if( s->options & SUB_LOGIN_SHELL ){
     SET_LSB_ERRMSG_TO("login shell can only be specified once");
@@ -4557,7 +4560,7 @@ int set_loginshell( struct submit *s, char *key, SV* value ){
 }
 
 int set_exception( struct submit *s, char *key, SV* value ){
-  ulong len;
+  int len;
   char *except;
 
   if( s->exceptList ){
@@ -4586,7 +4589,8 @@ void free_submit(struct submit *s){
 }
 
 int format_submit(struct submit *s, HV* sub ){
-  int keylen, size;
+  int size;
+  I32 keylen;
   unsigned long len;
   char *key;
   HE* entry;
@@ -4594,13 +4598,16 @@ int format_submit(struct submit *s, HV* sub ){
   int err = 0;
 
   size = hv_iterinit(sub);
-  size++; /* Why the size is off by one, who knows*/
+#ifdef _AIX
+  size++; /* Why the size is off by one on AIX who knows*/
+#endif
   while(size--){
     char *flag;
     entry = hv_iternext(sub);
     key = hv_iterkey(entry, &keylen);
     value = hv_iterval(sub,entry);
     flag = key + 1;
+    /*printf("format: got flag %s\n",key);*/
     switch( *flag ){
     case 'J':
     case 'j':
@@ -5096,7 +5103,7 @@ lsb_hostinfo(self, hosts)
 	int i, count = 0, num = 0;
 	LSF_Batch_hostInfo *p, *hinfo;
     PPCODE:
-	for( h = hosts; *h; h++ )count++;
+	for( h = hosts; hosts && *h; h++ )count++;
 	num = count;
 	if( count == 0 ) hosts = NULL;
 	hinfo = lsb_hostinfo(hosts, &num);
@@ -5124,7 +5131,7 @@ lsb_hostinfo_ex(self, hosts, resreq, options)
 	int i, count = 0, num;
 	LSF_Batch_hostInfo *p, *hinfo;
     PPCODE:
-	for( h = hosts; *h; h++ )count++;
+	for( h = hosts; hosts && *h; h++ )count++;
 	num = count;
 	if( count == 0 ) hosts = NULL;
         if(strlen(resreq)==0) resreq = NULL;
@@ -5317,7 +5324,7 @@ lsb_usergrpinfo(self, groups, options)
 	int i, count = 0, num;
 	struct groupInfoEnt *p, *gi;
     PPCODE:
-	for( g = groups; *g; g++ )count++;
+	for( g = groups; groups && *g; g++ )count++;
 	num = count;
 	if( count == 0 ) groups = NULL;
 	gi = lsb_usergrpinfo(groups, &num, options);
@@ -5349,7 +5356,7 @@ lsb_hostgrpinfo(self, groups, options)
 	int i, count = 0, num;
 	struct groupInfoEnt *p, *gi;
     PPCODE:
-	for( g = groups; *g; g++ )count++;
+	for( g = groups; groups && *g; g++ )count++;
 	num = count;
 	if( count == 0 ) groups = NULL;
 	gi = lsb_hostgrpinfo(groups, &num, options);
@@ -5381,10 +5388,11 @@ lsb_userinfo(self, users)
 	LSF_Batch_userInfo *ui, *p;
 	char **c;
     PPCODE:
-	for( c = users; *c; c++ ) count++;
+	for( c = users; users && *c; c++ ) count++;
 	num = count;
 	if( count == 0 ) users = NULL;
 	ui = lsb_userinfo(users, &num );
+	fflush(stdout);
 	if(ui == NULL){
 	    STATUS_NATIVE_SET(lsberrno);
 	    SET_LSB_ERRMSG;
@@ -5621,7 +5629,7 @@ lsb_queueinfo(self, queues, host, user, options)
 	int i, count = 0, num = 0;
 	LSF_Batch_queueInfo *p, *qinfo;
     PPCODE:
-	for( q = queues; *q; q++ ) count++;
+	for( q = queues; queues && *q; q++ ) count++;
 	num = count;
 	if( count == 0 ) queues = NULL;
 	if(strlen(host)==0) host = NULL;
@@ -6841,7 +6849,7 @@ job_mig(self, hosts, options)
         char **c;
 	int count = 0, idx;
     CODE:
-	for(c = hosts; *c; c++ )count++;
+	for(c = hosts; hosts && *c; c++ )count++;
 	if( count == 0 ) hosts = NULL;
 	mig.jobId = LSB_JOBID(self->jobId,self->arrayIdx);
 	mig.options = options;
@@ -6895,7 +6903,7 @@ job_run(self, hosts, options)
 	int count = 0;
 	struct runJobRequest r;
     CODE:
-	for( h = hosts; *h; h++ ) count++;
+	for( h = hosts; hosts && *h; h++ ) count++;
  	r.jobId = LSB_JOBID(self->jobId,self->arrayIdx);
 	r.numHosts = count;
 	r.hostname = hosts;
@@ -6958,10 +6966,10 @@ lsb_sharedresourceinfo(self, resources, hostName)
 	int i, count = 0, num;
 	LSF_Batch_sharedResourceInfo *p, *si;
     PPCODE:
-	for( r = resources; *r; r++ ) count++;
+	for( r = resources; resources && *r; r++ ) count++;
 	num = count;
 	if( count == 0 ) resources = NULL;
-	if(strlen(hostName)==0) hostName = NULL;
+	if(hostName && strlen(hostName)==0) hostName = NULL;
 	si = lsb_sharedresourceinfo(resources, &num, hostName, 0);
 	if(si == NULL){
 	    STATUS_NATIVE_SET(lsberrno);
@@ -7046,7 +7054,7 @@ lsb_hostpartinfo(self, hostParts)
 	char **h;
 	LSF_Batch_hostPartInfo *p, *pi;
     PPCODE:	
-	for( h = hostParts; *h; h++ ) count++;
+	for( h = hostParts; hostParts && *h; h++ ) count++;
 	num = count;
 	if( count == 0 ) hostParts = NULL;
 	pi = lsb_hostpartinfo(hostParts, &num);

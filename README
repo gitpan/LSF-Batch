@@ -5,9 +5,10 @@ Copyright (c) 2000 Paul Franceus. All rights reserved.  This program is
 free software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
 -----------------------------------------------------------------------------
-This is the first version of this library. Most of the functions in the 
-API have been implemented, but only a few have been tested, as you can
-see from the test.pl. 
+
+Most of the functions in the API have been implemented and work,  but
+the formal test.pl is pretty skimpy. We've been using it now for
+production work, so it's starting to get a workout.
 
 If you are interested in contributing at this point, you can:
 
@@ -19,13 +20,11 @@ If you are interested in contributing at this point, you can:
 
 Notes:
 
-I've only tested this on an IBM AIX 4.3.2 machine running perl 5.00403.
-It should be easily portable. I've built this to work with LSF 4.0. It 
-should be easy to get it to work with earlier versions of LSF, but I 
-haven't done that yet.
+This now works on both Solaris 2.6 and AIX 4.3. It's still very much alpha.
 
-You'll need to edit the Makefile.PL so it can find your version of the
-LSF includes and libraries.
+Thanks to Jim Meyer of Platform Computing for the updated Makefile.PL.
+
+Contributions are always welcome.
 
 History:
 
@@ -37,6 +36,12 @@ completely tested.
 Version 0.02 4/05/2000:
 
 Forgot to add this README to the MANIFEST. How silly of me!
+
+Version 0.03 6/01/2000:
+
+Got the library working on Solaris.
+Fixed several bugs.
+
 
 Any suggestions, comments, questions please send to me:
 

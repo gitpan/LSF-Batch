@@ -17,100 +17,13 @@ print "ok 1\n";
 # Insert your test code below (better if it prints "ok 13"
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
-use Config;
-$i = 0;
-foreach $name( split(" ", $Config{sig_name})){
-  $signo{$name} = $i++;
-}
-
 $ok2 = 1;
 $ok2 = 0 unless $b = new LSF::Batch "myTestApplication";
 
 print "not " unless $ok2;
 print "ok 2\n";
+if(0){
 
-exit unless $ok2;
-
-$ok3 = 1;
-
-$ENV{BSUB_QUIET} = 1;
-
-$command = <<EOF;
-#!/bin/ksh
-for j in 1 2 3 4 5 6 7 8 9 10
-do
-  for i in 1 2 3 4 5 6 7 8 9 10
-  do
-    date
-    sleep 1
-  done
-done
-EOF
-
-$res = "r1m < 1";
-$jname = "testjob1";
-$subtime = time;
-$cdir = "/tmp";
-
-chdir $cdir;
-
-$job = $b->submit( -command => $command,
-                   -resreq => $res,
-		   -jobName => $jname
-		   );
-
-$ok3 = 0 unless $job;
-
-$id = $job->jobId;
-if( $id != -1){
-  $job->signal($signo{STOP}) or $ok3 = 0;
-
-  my $rec;
-  $rec = $b->openjobinfo($job,undef,undef,undef,undef,0);
-  $ok3 = 0 unless $rec;
-  while($rec--){
-    $j = $b->readjobinfo;
-    unless($j){
-      $ok3 = 0;
-      next;
-    }
-    next unless $job->jobId == $j->jobId;
-    $ok3 = 0 unless IS_SUSP($j->status);
-    $ok3 = 0 if abs($j->submitTime - $subtime) > 5;
-    $ok3 = 0 unless $j->cwd eq $cdir;
-    $ok3 = 0 unless  $j->submit->resReq eq $res;
-  }
-  $b->closejobinfo;
-
-  $job->signal($signo{CONT}) or $ok3 = 0;
-}
-
-print "not " unless $ok3;
-print "ok 3\n";
-
-sleep 20;
-
-$ok4 = 1;
-
-$file = $job->peek;
-
-$ok4 = 0 unless $file =~ /$id$/;
-
-open PEEK,"<$file.out";
-
-$first = <PEEK>;
-($one) = split /\s+/, $first;
-
-while(<PEEK>){
-  ($won) = split;
-  $ok4 = 0 unless $one eq $won;
-}
-close PEEK;
-
-print "not " unless $ok4;
-print "ok 4\n";
-
-print "many more tests still need to be written.\n";
 @info = $b->userinfo(undef);
 
 $nu = @info;
@@ -123,13 +36,76 @@ print "$nq queue info records\n";
 
 @info = $b->sharedresourceinfo(undef,undef);
 
-$ns = @info;
-print "$ns shared resource records\n";
+print scalar(@info)," shared resource records\n";
 
 @info = $b->hostpartinfo(undef);
 
-$nh = @info;
-print "$nh host partition records\n";
+print scalar(@info), " host partitions\n";
+}
+$command = <<EOF;
+#!/bin/ksh
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+  date
+ sleep 10
+done
+EOF
+$name = "minerva.eis.nsa";
+$job = $b->submit( -hosts => $name,
+		   -jobName => "testjob1.$name.$$",
+		    -command => $command,
+		   -mailUser => "pmfranc\@nsa"
+		 );
+$|=1;
+exit;
+#print "job:",$job,"jobid: ",$job->jobId, "\n";
+#print "array index",$job->arrayIdx,"\n";
+
+if( $job->jobId != -1){
+  #print "sleeping...\n";
+  sleep 10;
+  $job->signal(SIGSTOP) or $b->perror("signal SIGSTOP");
+  #print "before oji\n";
+  #sleep 10;
+  #system("bjobs");
+  my $rec = 0;
+  $rec = $b->openjobinfo($job,undef,undef,undef,undef,0);
+  print "got $rec job information records.\n";
+  while($rec--){
+    $j = $b->readjobinfo;
+  }
+  print "got to close\n";
+  $b->closejobinfo;
+
+  $job->signal(SIGCONT) or $b->perror("signal");
+}
+$b->perror("here we are");
+print "\n";
+
+exit;
+
+$hosts[0] = "revelstone.q.nsa";
+
+$job->run(\@hosts, RUNJOB_OPT_NORMAL) or $b->perror("running job");
+
+# Job calls
+#modify
+#chkpnt
+#mig
+#move
+#peek
+#signal
+#switch
+#run
+
+#queuecontrol
+#sysmsg
+#perror
+
+#hostinfo_ex
+#hostgrpinfo
+#usergrpinfo
 
 
 exit;
+
