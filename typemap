@@ -1,0 +1,40 @@
+TYPEMAP
+LSF_Batch_job * T_PTROBJ_SPECIAL
+LSF_Batch_submit * T_PTROBJ_SPECIAL
+LSF_Batch_hostInfo * T_PTROBJ_SPECIAL
+LSF_Batch_userInfo * T_PTROBJ_SPECIAL
+LSF_Batch_parameterInfo * T_PTROBJ_SPECIAL
+LSF_Batch_queueInfo * T_PTROBJ_SPECIAL
+LSF_Batch_jobInfo * T_PTROBJ_SPECIAL
+LSF_Batch_jRusage * T_PTROBJ_SPECIAL
+LSF_Batch_shareAcctInfo * T_PTROBJ_SPECIAL
+LSF_Batch_sharedResourceInfo * T_PTROBJ_SPECIAL
+LSF_Batch_sharedResourceInstance * T_PTROBJ_SPECIAL
+LSF_Batch_hostPartInfo * T_PTROBJ_SPECIAL
+LSF_Batch_hostPartUserInfo * T_PTROBJ_SPECIAL
+LSF_Batch_parameterInfo * T_PTROBJ_SPECIAL
+float T_FLOAT
+int * T_PACKED
+HV *  T_HVREF_pmf
+
+INPUT
+T_HVREF_pmf
+	if (SvTYPE(SvRV($arg))==SVt_PVHV)
+	    $var = (HV*)SvRV($arg);
+	else
+	    croak(\"$var is not a hash refrence\")
+
+T_PTROBJ_SPECIAL
+    if (sv_derived_from($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")) {
+        IV tmp = SvIV((SV*)SvRV($arg));
+        $var = ($type) tmp;
+    }
+    else
+        croak(\"$var is not of type ${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")
+
+OUTPUT
+T_PTROBJ_SPECIAL
+    sv_setref_iv($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\",
+    (int)$var);
+
+

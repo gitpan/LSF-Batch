@@ -1,0 +1,11 @@
+Av_CharPtrPtr.c
+Av_CharPtrPtr.h
+Av_IntPtr.c
+Av_IntPtr.h
+Batch.pm
+Batch.xs
+Changes
+MANIFEST
+Makefile.PL
+test.pl
+typemap
