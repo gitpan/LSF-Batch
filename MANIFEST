@@ -7,5 +7,6 @@ Batch.xs
 Changes
 MANIFEST
 Makefile.PL
+README
 test.pl
 typemap
