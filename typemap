@@ -55,11 +55,25 @@ LSF_Batch_jobForceRequestLog * T_PTROBJ_SPECIAL
 LSF_Batch_jobChunkLog * T_PTROBJ_SPECIAL
 LSF_Batch_jobExternalMsgLog * T_PTROBJ_SPECIAL
 LSF_Batch_jobAttrSetLog * T_PTROBJ_SPECIAL
+LSF_Batch_rsvFinishLog * T_PTROBJ_SPECIAL
+LSF_Batch_hgCtrlLog * T_PTROBJ_SPECIAL
+LSF_Batch_cpuProfileLog * T_PTROBJ_SPECIAL
+LSF_Batch_jobRunRusageLog * T_PTROBJ_SPECIAL
+LSF_Batch_dataLoggingLog * T_PTROBJ_SPECIAL
+LSF_Batch_eventEOSLog * T_PTROBJ_SPECIAL
+LSF_Batch_slaLog * T_PTROBJ_SPECIAL
+LSF_Batch_perfmonLog * T_PTROBJ_SPECIAL
+LSF_Batch_rsvRes * T_PTROBJ_SPECIAL
 LSF_Batch_xFile * T_PTROBJ_SPECIAL
 LSF_Batch_lsfRusage * T_PTROBJ_SPECIAL
+LSF_Batch_apsFactorMap * T_PTROBJ_SPECIAL
+LSF_Batch_apsLongNameMap * T_PTROBJ_SPECIAL
+LSF_Batch_apsFactorInfo * T_PTROBJ_SPECIAL
+LSF_Batch_apsFactorMap * T_PTROBJ_SPECIAL
 float T_FLOAT
 int * T_PACKED
 HV *  T_HVREF_pmf
+char ** T_PACKEDARRAY
 
 INPUT
 T_HVREF_pmf
@@ -67,6 +81,9 @@ T_HVREF_pmf
 	    $var = (HV*)SvRV($arg);
 	else
 	    croak(\"$var is not a hash refrence\")
+
+T_PACKEDARRAY
+       $var = XS_unpack_$ntype($arg)
 
 T_PTROBJ_SPECIAL
     if (sv_derived_from($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")) {
@@ -84,4 +101,5 @@ T_PTROBJ_SPECIAL
     sv_setref_iv($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\",
     (IV)$var);
 
-
+T_PACKEDARRAY
+   XS_pack_$ntype($arg, $var);

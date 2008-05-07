@@ -7,7 +7,7 @@
 # (It may become useful if the test is moved to ./t subdirectory.)
 
 BEGIN { 
-  $| = 1; print "1..1\n";
+  $| = 1; print "1..16\n";
   $nolsfbase = 1 unless eval "require LSF::Base";
 }
 
@@ -43,13 +43,17 @@ print "ok 2\n";
 
 $ok3 = 1;
 
-@info = $b->userinfo(undef) or $ok3 = 0;
+@user = ("xxx");
+@info = $b->userinfo(\@user) or $ok3 = 0;
 
 foreach $user (@info){
   $ok3 = 0 if $user->maxJobs == 0;
 }
 
-@info = $b->queueinfo(undef,undef,undef,undef) or $ok3 = 0;
+@queues = ("normal","owners","priority","night","chkpnt_rerun_queue","short","license","idle");
+$host = `hostname`;
+$queueoption = 0;
+@info = $b->queueinfo(\@queues,$host,$user,$queueoption) or $ok3 = 0;
 
 $nq = @info;
 
@@ -60,13 +64,15 @@ foreach $queue (@info){
 }
 
 $ok3 = 0 unless $nq;
-
-@info = $b->sharedresourceinfo(undef,undef);
+@resource = ("MEM");
+$resourceopt = 0;
+@info = $b->sharedresourceinfo(\@resource,$host,$resourceopt);
 
 unless( @info ){
   $ok3 = 0 unless $@ eq "No resource defined";
 }
 
+@hostparts = ("xxx");
 @info = $b->hostpartinfo(undef);
 $ok3 = 0 unless @info;
 
@@ -88,7 +94,7 @@ $jobname = "testjob1.$$";
 
 $ENV{BSUB_QUIET} = 1;
 
-$job = $b->submit(  -jobName => $jobname, 
+$job = $b->submit(  -JobName => $jobname, 
 		    -command => $command,
 		    -output => "/dev/null"
 		 );
@@ -146,7 +152,7 @@ open LOG, $events;
 
 $ok5 = 1;
 $line = 1;
-while($er = $b->geteventrec( LOG, $line)){
+while($er = $b->geteventrecord( LOG, $line)){
   $el = $er->eventLog;
   $lt = localtime $er->eventTime;
   if( $er->type == EVENT_JOB_NEW ){
@@ -206,7 +212,7 @@ while($er = $b->geteventrec( LOG, $line)){
     $numqueues = $el->numQueues;
     #print "Master batch daemon started on $master for cluster $cluster.\n";
     #print "Hosts = $numhosts, queues = $numqueues\n";
-    $ok5 = 0 if $cluster != $clustername or $numqueues != $nq;
+    $ok5 = 0 if $cluster != $clustername;
   }
   else{
     #print "Got event type ",$er->type,"\n";
@@ -219,33 +225,171 @@ print "ok 5\n";
 #$job->run(\@hosts, RUNJOB_OPT_NORMAL) or $b->perror("running job");
 
 
+$ok6 = 1;
+$mysysmsg = $b->sysmsg();
+$ok6 = 0 unless $mysysmsg eq "End of file";
+print "not " unless $ok6;
+print "ok 6\n";
+
+$ok7 = 1;
+$myappname = "MyTestApplication";
+$myinit= $b->init($myappname);
+$ok7 = 0 unless $myinit;
+print "not " unless $ok7;
+print "ok 7\t";
+if(! $ok7)
+{
+  $msg = $b->sysmsg();
+  print "$msg";
+}
+print "\n";
+
+$ok8 = 1;
+$rcfgopt = MBD_CKCONFIG; #This value should be MBD_RESTART, MBD_RECONFIG,MBD_CKCONFIG
+$myreconfig= $b->reconfig($rcfgopt);
+$ok8 = 0 unless $myreconfig;
+print "not " unless $ok8;
+print "ok 8\t";
+if(! $ok8)
+{
+  $msg = $b->sysmsg();
+  print "$msg";
+}
+print "\n";
+
+$ok9 = 1;
+$hostctrlopt = HOST_OPEN; #This value should be HOST_OPEN, HOST_CLOSE, HOST_REBOOT
+                          #HOST_SHUTDOWN, HOST_CLOSE_REMOTE
+$myhostcontrol= $b->hostcontrol($host,$hostctrlopt);
+$ok9 = 0 unless $myhostcontrol;
+print "not " unless $ok9;
+print "ok 9\t";
+if(! $ok9)
+{
+  $msg = $b->sysmsg();
+  print "$msg";
+}
+print "\n";
+
+$ok10 = 1; 
+@hostinfo = $b->hostinfo($host)or $ok10 = 0;
+foreach $host (@hostinfo){
+  $ok10 = 0 if length($host->host) == 0;
+}
+print "not " unless $ok10;
+print "ok 10\t";
+if(! $ok10)
+{
+  $msg = $b->sysmsg();
+  print "$msg";
+}
+print "\n";
+
+$ok11 = 1;
+@hostinfo_ex = $b->hostinfo_ex(undef,undef,undef)or $ok11 = 0;
+foreach $host (@hostinfo_ex){
+  $ok11 = 0 if $host->maxJobs == 0;
+}
+print "not " unless $ok11;
+print "ok 11\t";
+if(! $ok11)
+{
+  $msg = $b->sysmsg();
+  print "$msg";
+}
+print "\n";
+
+$ok12 = 1;
+@usergrpinfo = $b->usergrpinfo(undef,undef)or $ok12 = 0;
+foreach $usegrp (@usergrpinfo){
+  $ok12 = 0 if length($usegrp) == 0;
+}
+print "not " unless $ok12;
+print "ok 12\t";
+if(! $ok12)
+{
+  $msg = $b->sysmsg();
+  print "$msg";
+}
+print "\n";
+
+$ok13 = 1;
+@hostgrpinfo = $b->hostgrpinfo(undef,undef) or $ok13 = 0;
+foreach $hostgrp (@hostgrpinfo){
+  $ok13 = 0 if length($hostgrp) == 0;
+}
+print "not " unless $ok13;
+print "ok 13\t";
+if(! $ok13)
+{
+  $msg = $b->sysmsg();
+  print "$msg";
+}
+print "\n";
+
+
+$ok14 = 1;
+$myqueuectrl= $b->queuecontrol(undef,undef);
+$ok14 = 0 unless $myqueuectrl;
+print "not " unless $ok14;
+print "ok 14\t";
+if(! $ok14)
+{
+  $msg = $b->sysmsg();
+  print "$msg";
+}
+print "\n";
+
+$ok15 = 1;
+$myparainfo = $b->parameterinfo();
+$ok15 = 0 unless defined($myparainfo);
+$pidefaultQueues = $myparainfo->defaultQueues;
+$ok15 = 0 unless length($pidefaultQueues) > 0;
+print "not " unless $ok15;
+print "ok 15\t";
+if(! $ok15)
+{
+  $msg = $b->sysmsg();
+  print "$msg";
+}
+print "\n";
+
+
+$ok16 = 1;
+$job = $b->JobID2Job(undef);
+$rec = $b->openjobinfo($job,undef,undef,undef,undef,1);
+$j = $b->readjobinfo;
+$myjob = $j->job or $err1 = 1; 
+$myjob->modify() or $err2 = 1;
+$err2 = 1 unless length($@) == 0;
+
+$mychkpnt = $myjob->chkpnt(undef,undef);
+$err3 = 1 unless $mychkpnt;
+
+$mymig = $myjob->mig(undef,undef);
+$err4 = 1 unless $mymig;
+
+$mymove = $myjob->move(undef,undef);
+$err5 = 1 unless defined($mymove);
+
+$mypeek = $myjob->peek();
+$err6 = 1 unless length($mypeek) != 0;
+
+$myrunoption = RUNJOB_OPT_NORMAL;
+$myrun = $myjob->run(undef,undef,$myrunoption);
+$err7 = 1 unless $myrun;
+
+$mysignal = $myjob->signal(undef);
+$err7 = 1 unless $mysignal;
+
+$myswitch = $myjob->switch(undef);
+$err8 = 1 unless $myswitch;
+
+$ok16 = 0 if $err1 or $err2 or $err3 or $err4 or $err5 or $err6 or $err7 or $err8;
+print "not " unless $ok16;
+print "ok 16\n";
+
+
 exit;
 
-
-
-
-
-
-
-
-# Job calls
-#modify
-#chkpnt
-#mig
-#move
-#peek
-#signal
-#switch
-#run
-
-#queuecontrol
-#sysmsg
-#perror
-
-#hostinfo_ex
-#hostgrpinfo
-#usergrpinfo
-
-
-exit;
 

@@ -673,7 +673,7 @@ use DynaLoader;
         IS_POST_ERR
         IS_POST_FINISH
 );
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 sub AUTOLOAD {
   # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -776,7 +776,7 @@ sub submit{
 	$subreq{$_} = shift;
       }
       else{
-	$subreq{$_} = 1;
+	$subreq{$_} = "";
       }
     }
     $job = do_submit(\%subreq);
@@ -858,56 +858,76 @@ Corporation's Load Sharing Facility (LSF) Batch product.
   #values upon failure.
 
   $msg = $batch->sysmsg;
+  
+  $batch->JobID2Job;
 
   $batch->perror;
 
   #job submission and modification
 
-  $job = $batch->submit( -J | -jobName        => "foo",
-                         -q | -queue          => "normal",
-                         -m | -hosts          => [qw(a b c d)],
-                         -R | -resreq         => "select[solaris && r1m<1.0]"
-                         -c | -cpulimit       => 300,
-                         -W | -runlimit       => 3600,
-                         -F | -filelimit      => 100000,
-                         -M | -memlimit       => 1000,
-                         -D | -datalimit      => 122121,
-                         -S | -stacklimit     => 122331,
-                         -C | -corelimit      => 11111,
-                         -spec | -hostSpec    => "foo",
-                         -w | -dependCond     => "ended(foo2)",
-                         -b | -beginTime      => time + 100,
-                         -t | -termTime       => time + 1000,
-                         -sig | -sigValue            => SIGINT,etc.
-                         -i | -inFile         => "input",
-                         -o | -outFile        => "output",
-                         -e | -errFile        => "error",
-                         -command             => "sleep 30",
-                         -k | -checkpointable => "/checkpoint",
-                         -period | -chkpntPeriod => 20,
-                         -f | -transfer       => "file1 > file2",
-                         -f | -transfer       => "file3 < file2",
-                         -E | -preExec        => "run_me_first",
-                         -u | -mailUser       => "user@mail",
-                         -P | -projectName    => "work",
-                         -n | -numProcessors  => 1,
-                         -maxNumProcessors    => 4,
-                         -L | -loginShell     => "/bin/ksh",
-                         -G | -userGroup      => "workers",
-                         -X | -exception      => 
+  $job = $batch->submit( -J         => "foo",
+                         -q         => "normal",
+                         -m         => [qw(a b c d)],
+                         -R         => "select[solaris && r1m<1.0]"
+                         -c         => 300,
+                         -W         => 3600,
+                         -F         => 100000,
+                         -M         => 1000,
+                         -D         => 122121,
+                         -S         => 122331,
+                         -C         => 11111,
+                         -w         => "ended(foo2)",
+                         -b         => time + 100,
+                         -t         => time + 1000,
+                         -sig       => SIGINT,etc.
+                         -i         => "input",
+                         -o         => "output",
+                         -e         => "error",
+                         -command   => "sleep 30",
+                         -k         => "/checkpoint",
+                         -f         => "file1 > file2",
+                         -f         => "file3 < file2",
+                         -E         => "run_me_first",
+                         -u         => "user@mail",
+                         -P         => "work",
+                         -n         => 1,
+                         -L         => "/bin/ksh",
+                         -G         => "workers",
+                         -X         => 
                                 "overrun(10)::kill;abend(1)::setexcept(fail)",
-                         -checkpointCopy,
-                         -checkpointForce,
-                         -x | -exclusive,
-                         -B | -notifyBegin,
-                         -N | -notifyEnd,
-                         -restartForce,
-                         -r | -rerunnable,
-                         -I | -interactive,
-                         -Ip | -pty,
-                         -Is | -ptyShell,
-                         -H | -hold,
-                         -K | -block,
+                         -x ,
+                         -B ,
+                         -N ,
+                         -r ,
+                         -I ,
+                         -Ip,
+                         -Is,
+                         -H ,
+                         -K ,
+                         -T          => 2,
+                         -app        => "file1"
+			 -aps        => "file1",
+                         -is         => "file1",
+                         -Zs      
+                         -v          => 20,
+                         -We         => Format is [hours:]minutes[/hostSpec],
+                         -U          => reservation_id,
+                         -rn,
+                         -V,
+                         -Lp         => "License project",
+                         -oo         => "Output file. ",
+                         -ext  | -extsched    => option,
+                         -eo         => "error",
+                         -sla        => "name",
+                         -sp         => 5,
+                         -p          => 5,
+                         -jsdl | -jsdl_strict => "file1",
+                         -ul,
+                         -Q          => requeue_exit_values,
+                         -cwd        => "/dir/",
+                         -g          => job_group,
+                         -mig        => 2
+                         )
      
   $job->modify( ... ) or die; #similar to submit interface
                          
@@ -943,7 +963,7 @@ Corporation's Load Sharing Facility (LSF) Batch product.
   
   $job->switch($queue);
 
-  $job->run(\@hosts, options);
+  $job->run(\@hosts, slots, options);
 
   #submitted job information
 
@@ -1149,7 +1169,7 @@ Corporation's Load Sharing Facility (LSF) Batch product.
   open LOG, "/usr/local/lsf/work/clustername/logdir/lsb.events";
 
   $line = 1;
-  while( $er = $b->geteventrec( LOG, $line)){
+  while( $er = $batch->geteventrecord( LOG, $line)){
     $el = $er->eventLog;
     $lt = localtime $er->eventTime;
     print "event $line at $lt:";
@@ -1841,6 +1861,10 @@ in the documentation.
 =head1 AUTHOR
 
 Paul Franceus, Capita Technologies, Inc., paul@capita.com
+
+=head1 Modifier
+
+ISV Team, Platform Computing Corporation, support@platform.com
 
 =head1 SEE ALSO
 

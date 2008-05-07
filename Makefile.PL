@@ -3,15 +3,19 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 
 unless ($ENV{'LSF_ENVDIR'}) {
-  $ENV{'LSF_ENVDIR'} = prompt("Directory containing lsf.conf file for this machine:","/usr/local/lsf/etc");
+  $ENV{'LSF_ENVDIR'} = prompt("Directory containing lsf.conf file for this machine:","/etc/");
 }
 
 my $lsfConf = $ENV{LSF_ENVDIR}."/lsf.conf";
 
 die "Cannot find lsf.conf file in $ENV{LSF_ENVDIR}\n" unless (-r $lsfConf);
 
-# Get LSF_LIBDIR and LSF_INCLUDEDIR from config file
-chomp(my $lsfLib = `grep ^LSF_LIBDIR $lsfConf`);
+# Get LSF_LIBDIR(if not found in the environment veriables) and LSF_INCLUDEDIR from config file
+my $lsfLib = $ENV{'LSF_LIBDIR'};
+unless ($lsfLib)
+{
+    chomp(my $lsfLib = `grep ^LSF_LIBDIR $lsfConf`);
+}
 $lsfLib =~ s/^[^=]+=//;
 die "Invalid LSF_LIBDIR ($lsfLib)\n" unless ((-d $lsfLib) && (-r $lsfLib));
 warn "Found LSF_LIBDIR: $lsfLib\n";
@@ -27,7 +31,7 @@ warn "Found OS=$os\n";
 for($os){
   /OSF1/ && do{$libs = "-L$lsfLib -llsf -lbat -lmach -lmld";};
   /AIX/ && do{$libs = "-L$lsfLib -llsf -lbat -lbsd";};
-  /SunOS/ && do{$libs = "-L$lsfLib -lbat -llsf -lnsl -lsocket -lrpcsvc -lgen -ldl";};
+  /SunOS/ && do{$libs = "-L$lsfLib -lbat -llsf -lnsl -lsocket -lrpcsvc -lgen -ldl -lresolv";};
   /Linux/ && do{$libs = "-L$lsfLib -lbat -llsf";};
 }
 

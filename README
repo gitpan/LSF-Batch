@@ -56,3 +56,14 @@ Any suggestions, comments, questions please send to me:
 Paul Franceus
 Capita Technologies, Inc.
 paul@capita.com
+
+-----------------------------------------------------------------------------------
+
+Version 0.05 4/29/2008
+
+Based on Version 0.04,some enhancement of APIs were added to suitable for LSF 7.0 Update 2.
+All the APIs have been test in test.pl on Linux 2.6 and Solaris 10(X86_64) by perl 5.8.0.
+
+ISV Team
+Platform Computing Corporation
+support@platform.com
