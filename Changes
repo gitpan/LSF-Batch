@@ -10,3 +10,11 @@ Revision history for Perl extension LSF::Batch.
 
 	- Modify some APIs according to LSF 7.0 Update 2. Test all the
 	  APIs on LSF 7.0 Update 2 on Linux 2.6 X86 and Solaris 10 X86_64.
+
+0.06 Friday June 13 2008
+   
+       - Updated for LSF 7.0 Update 2.
+       
+       - Add some APIs according to LSF 7.0 Update 2. Test these  APIs on 
+         LSF 7.0 Update 2 on Linux 2.6 X86 and Solaris 10 X86_64.
+       

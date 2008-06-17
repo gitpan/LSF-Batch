@@ -12,3 +12,4 @@ test.pl
 typemap
 ppport.h
 makexs.pl
+test_launch.pl

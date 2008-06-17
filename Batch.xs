@@ -23,6 +23,7 @@ extern "C" {
 
 #define SET_LSB_ERRMSG sv_setpv(GvSV(PL_errgv),lsb_sysmsg())
 #define SET_LSB_ERRMSG_TO(msg)  sv_setpv(GvSV(PL_errgv),msg)
+#define SET_LSF_ERRMSG sv_setpv(GvSV(PL_errgv),ls_sysmsg())
 
 static int
 not_here(s)
@@ -5356,6 +5357,7 @@ int format_submit(struct submit *s, HV* sub ){
     key = hv_iterkey(entry, &keylen);
     value = hv_iterval(sub,entry);
     flag = key + 1;
+
     /*printf("format: got flag %s\n",key);*/
     switch( *flag ){
     case 'J':
@@ -5862,6 +5864,378 @@ struct myjob{
   int badReqIndx;
 };
 
+int
+set_range(struct addRsvRequest *req, SV *rag)
+{
+  STRLEN len;
+  char *range;
+  char *p;
+  char *dltr;
+  
+  range = (char *)SvPV(rag, len);
+  p = range;
+  
+  while (strlen(p) > 0) {
+    if ((*p < '0' || *p > '9') && *p != ',') {
+      SET_LSB_ERRMSG_TO("Processor number range value can not be converted to digital.");
+      return -1;	
+    }
+    p ++;
+  }
+  dltr = strchr(range, ',');
+  if (dltr == NULL) {
+    req->procRange.minNumProcs = atoi(range);
+    req->procRange.maxNumProcs = req->procRange.minNumProcs;
+  } else {
+    *dltr = '\0';
+	req->procRange.minNumProcs = atoi(range);
+	req->procRange.maxNumProcs = atoi(dltr+1);
+  }
+  if (req->procRange.minNumProcs <= 0 || req->procRange.maxNumProcs <= 0) {
+    SET_LSB_ERRMSG_TO("Only a single positive (non-zero) integer can appear in the -n option.");
+    return -1;	
+  }
+  return 0;
+}
+
+int 
+set_machines(struct addRsvRequest *req, SV *m)
+{
+  STRLEN len;
+  char **hosts;
+  
+  /* could be a single host, or an array */
+  if( SvPOK(m) ){
+    /*assume a single host*/
+    hosts = (char**)safemalloc(sizeof(char *));
+    *hosts = (char*)SvPV(m, len);
+    req->askedHosts = hosts;
+    req->numAskedHosts = 1;
+    req->options |= RSV_OPTION_HOST;
+  } else if( SvROK(m) && SvTYPE(SvRV(m)) == SVt_PVAV ){
+    AV* array;
+    int length, i;
+    /*this is an array reference*/
+    array = (AV*)SvRV(m);
+    length = av_len(array) + 1;
+    hosts = (char**)safemalloc(length*sizeof(char *));
+    for( i = 0; i < length; i++){
+      hosts[i] = (char *)SvPV(*av_fetch(array,i,0),len);
+    }
+    req->askedHosts = hosts;
+    req->numAskedHosts = length;
+    req->options |= RSV_OPTION_HOST;
+  } else {
+    SET_LSB_ERRMSG_TO("argument requires a string or array");
+    return -1;
+  }
+  return 0;	
+}
+
+int 
+set_username(struct addRsvRequest *req, SV *name)
+{
+  STRLEN len;
+  
+  if (req->options & (RSV_OPTION_GROUP | RSV_OPTION_SYSTEM)) {
+    SET_LSB_ERRMSG_TO("You must specify exactly one of the '-u', '-g' and '-s' options");
+    return -1;
+  }
+  req->options |= RSV_OPTION_USER;
+  req->name = (char *)SvPV(name, len);
+  return 0;	
+}
+
+int 
+set_groupname(struct addRsvRequest *req, SV *name)
+{
+  STRLEN len;
+  
+  if (req->options & (RSV_OPTION_USER | RSV_OPTION_SYSTEM)) {
+    SET_LSB_ERRMSG_TO("You must specify exactly one of the '-u', '-g' and '-s' options");
+    return -1;
+  }
+  req->options |= RSV_OPTION_GROUP;
+  req->name = (char *)SvPV(name, len);
+  return 0;	
+}
+
+int 
+set_rsvresreq(struct addRsvRequest *req, SV *resreq)
+{
+  STRLEN len;
+  
+  if (req->options & RSV_OPTION_RESREQ) {
+    SET_LSB_ERRMSG_TO("You can specify only one -R option");
+    return -1;
+  }
+  req->options |= RSV_OPTION_RESREQ;
+  req->resReq = (char *)SvPV(resreq, len);
+  return 0;	
+}
+
+int 
+set_sys(struct addRsvRequest *req, SV *sys)
+{
+  if (req->options & (RSV_OPTION_USER | RSV_OPTION_GROUP)) {
+    SET_LSB_ERRMSG_TO("You must specify exactly one of the '-u', '-g' and '-s' options");
+    return -1;
+  }
+  req->options |= RSV_OPTION_SYSTEM;
+  req->name = "system";
+  return 0;
+}
+
+int set_twin(struct addRsvRequest *req, SV *tw)
+{
+  STRLEN len;
+  
+  req->timeWindow = (char *)SvPV(tw, len);
+  req->options |= RSV_OPTION_RECUR;
+
+  return 0;	
+}
+
+int 
+set_open(struct addRsvRequest *req, SV *val)
+{ 
+  req->options |= RSV_OPTION_OPEN;
+
+  return 0;	
+}
+
+int 
+format_rsvaddreq(struct addRsvRequest *req, HV *hv) 
+{
+  SV *val;
+  I32 keylen;
+  unsigned long len;
+  char *key;
+  HE* entry;
+  int ret = -1;
+  int size;
+
+  size = hv_iterinit(hv);
+#ifdef _AIX
+  size++; /* Why the size is off by one on AIX who knows*/
+#endif
+  while(size--){
+    char *flag;
+    entry = hv_iternext(hv);
+    key = hv_iterkey(entry, &keylen);
+    val = hv_iterval(hv,entry);
+    flag = key + 1;
+    switch (*flag) {
+      case 'n':
+        if (set_range(req, val) < 0)
+          goto END;
+        break;
+      case 'm':
+        if (set_machines(req, val) < 0)
+          goto END;
+        break;
+      case 'u':
+        if (set_username(req, val) < 0)
+          goto END;
+        break;
+      case 'g':
+        if (set_groupname(req, val) < 0)
+          goto END;
+        break; 
+      case 'R':
+        if (set_rsvresreq(req, val) < 0)
+          goto END;
+        break;       
+      case 's':
+        if (set_sys(req, val) < 0)
+          goto END;
+        break; 
+      case 't':
+        if (set_twin(req, val) < 0)
+          goto END;
+        break;
+      case 'o':
+        if (set_open(req, val) < 0)
+          goto END;
+        break;
+      case 'e':
+      case 'b':
+	    if (req->options & RSV_OPTION_RECUR) {
+		  req->options &= ~RSV_OPTION_RECUR;
+		}
+	    break;
+      default :
+        SET_LSB_ERRMSG_TO( "invalid flag" );            
+        goto END;
+    }
+  }
+  if (!(req->options & RSV_OPTION_RESREQ)) {
+      req->resReq = "";
+  }
+  ret = 0;
+END:
+  return ret;	
+}
+
+void
+free_rsvaddreq(struct addRsvRequest *req)
+{
+  safefree(req->askedHosts);
+  safefree(req);
+}
+
+int                                                                               
+set_fileName(char* key, SV* value, char **fileName){ 
+  STRLEN len;                                                                     
+  *fileName = (char*)SvPV(value, len);                                            
+  return 0;                                                                       
+}    
+
+int
+set_desc(struct jobExternalMsgReq *s, char* key, SV* value){
+  STRLEN len;
+  s->desc = (char*)SvPV(value, len);
+  return 0;
+}
+
+int
+set_jobName(struct jobExternalMsgReq *s, char* key, SV* value){
+  STRLEN len;
+  s->jobName = (char*)SvPV(value, len);
+  return 0;
+}
+
+int
+set_msgIdx(struct jobExternalMsgReq *s, char* key, SV* value){
+  s->msgIdx = (int)SvIV(value);
+  return 0;
+}                                                                             
+
+void 
+initialize_jobExternalMsgReq(struct jobExternalMsgReq *s){ 
+  bzero(s,sizeof(struct jobExternalMsgReq));                    
+}                                                               
+ 
+int format_jobExternalMsgReq(struct jobExternalMsgReq *s, HV* req, char **fileName){
+  int size;
+  I32 keylen;
+  unsigned long len;
+  char *key;
+  HE* entry;
+  SV* value;
+  int err = 0;
+
+  size = hv_iterinit(req);
+#ifdef _AIX
+  size++; /* Why the size is off by one on AIX who knows*/
+#endif
+  while(size--){
+    char *flag;
+    entry = hv_iternext(req);
+    key = hv_iterkey(entry, &keylen);
+    value = hv_iterval(req,entry);
+    flag = key + 1;
+    /*printf("format: got flag %s\n",key);*/
+    switch( *flag ){
+      case 'a':
+      /*fileName*/
+        err = set_fileName(key, value, fileName);
+        break;
+      case 'd':
+      /*description*/
+        err = set_desc(s,key,value);
+        break;
+      case 'J':
+      /*jobname*/
+        err = set_jobName (s,key,value);
+        break;
+      case 'i':
+      /*msgIdx*/
+        err = set_msgIdx (s,key,value);
+        break;
+      default:
+        break;
+    }
+    if(err==-1){
+      return -1;
+    }
+  }
+  return 0;
+}
+
+int 
+readfile(int s, char *fileName, int fileSize)
+{
+  int fd;
+  char buf[4096];
+  int rSize;
+  int len, ret = -1;
+
+  bzero(buf, sizeof(buf));
+  if ((fd = open(fileName, O_CREAT | O_RDWR | O_TRUNC, 0600)) <0){
+    return -1;
+  }
+  
+  rSize = fileSize;
+  while (rSize > 0) {
+    if ((len = read(s, buf, sizeof(buf))) < 0) {
+      goto END;
+    }
+    if((ret = write(fd, buf, len)) < 0) {
+      goto END;
+    }
+    rSize = rSize - len;
+    bzero(buf, sizeof(buf));
+  }
+  ret = 0;
+END:
+  close(fd);
+  return ret;
+}
+
+int 
+format_rjmreq(struct jobExternalMsgReq *req, HV *hv, char **fileName) 
+{ 
+  char *key;
+  I32 klen;
+  SV *val;
+  int ret = -1;
+  STRLEN len;
+  
+  (void)hv_iterinit(hv);
+  while ((val = hv_iternextsv(hv, (char **)&key, &klen))) {
+    switch (key[1]) {
+      case 'i':
+      	req->msgIdx = atoi((char*)SvPV(val, len));
+      	break;
+      case 'a':
+      	if (val != NULL)
+           req->options |= EXT_ATTA_READ;
+	   *fileName = (char*)SvPV(val, len);
+      	break;
+      case 'J':
+        if (val != NULL)
+          req->jobName = (char*)SvPV(val, len);
+        break;
+      default :
+        SET_LSB_ERRMSG_TO( "invalid flag" );            
+        goto END;
+    }
+  }
+  req->options |= EXT_MSG_READ;
+  ret = 0;
+END:
+  return ret;
+}
+
+int
+free_rjmreq(struct jobExternalMsgReq *req)
+{
+    safefree(req);
+    return 0;
+}
+
+typedef struct jobInfoHead LSF_Batch_jobInfoHead;
 typedef struct myjob LSF_Batch_job;
 typedef struct submit LSF_Batch_submit;
 typedef struct jobInfoEnt LSF_Batch_jobInfo;
@@ -5934,6 +6308,9 @@ typedef struct rsvRes LSF_Batch_rsvRes;
 typedef struct apsFactorInfo LSF_Batch_apsFactorInfo;
 typedef struct apsFactorMap LSF_Batch_apsFactorMap;
 typedef struct apsLongNameMap LSF_Batch_apsLongNameMap;
+typedef struct rsvInfoEnt LSF_Batch_rsvInfoEnt;
+typedef struct hostRsvInfoEnt LSF_Batch_hostRsvInfoEnt;
+typedef struct pidInfo LSF_Batch_pidInfo;
 
 MODULE = LSF::Batch PACKAGE = LSF::Batch::xFilePtr PREFIX = xf_
 
@@ -6029,6 +6406,34 @@ lsb_reconfig(self, option)
    OUTPUT:
 	RETVAL
 
+char *
+do_rsvadd(sub)
+	HV *sub
+    PREINIT:
+        struct addRsvRequest *req;
+        int ret;
+        char *rsvid = NULL;
+    CODE:
+        req = (struct addRsvRequest*)safemalloc(sizeof(struct addRsvRequest));
+        bzero(req, sizeof(struct addRsvRequest));
+        rsvid = (char *)safemalloc(MAXLSFNAMELEN * 2 * sizeof(char));
+        if (format_rsvaddreq(req, sub) < 0) {
+            free_rsvaddreq(req);
+            safefree(rsvid);
+            SET_LSB_ERRMSG;
+            XSRETURN_EMPTY;	
+        }
+        if (lsb_addreservation(req, rsvid) < 0) {
+            free_rsvaddreq(req);
+            safefree(rsvid);
+            STATUS_NATIVE_SET(lsberrno);
+            SET_LSB_ERRMSG;
+            XSRETURN_EMPTY;	
+        }
+        free_rsvaddreq(req);
+        RETVAL = rsvid;
+	OUTPUT:
+	RETVAL
 
 LSF_Batch_job *
 do_submit(sub)
@@ -6065,24 +6470,6 @@ do_submit(sub)
         RETVAL = j;
     OUTPUT:
         RETVAL 
-
-LSF_Batch_job *
-JobID2Job(self,jobId)
-       void *self
-       long jobId;	
-    PREINIT:
-        LSF_Batch_job *j;
-    CODE:
-        j = (LSF_Batch_job *)safemalloc(sizeof(LSF_Batch_job));
-        j->jobId = LSB_ARRAY_JOBID(jobId);
-        j->arrayIdx = LSB_ARRAY_IDX(jobId);
-	      strncpy(j->queue, "", MAX_LSB_NAME_LEN);
-	      j->badJobId = 0;
-        j->badReqIndx = 0;
-        strncpy(j->badJobName, "", MAX_LSB_NAME_LEN);
-        RETVAL = j;
-    OUTPUT:
-        RETVAL 	
 
 int
 lsb_hostcontrol(self, host, opcode)
@@ -6163,6 +6550,214 @@ lsb_hostinfo_ex(self, hosts, resreq, options)
 	}
 	XSRETURN(num);
 	
+void
+lsb_gethostlist(self)
+        void *self
+    PREINIT:
+        int ret;
+        int nhosts = 0;
+        char **p = NULL;
+        char **hosts = NULL;
+    PPCODE:
+        ret = lsb_getalloc(&hosts);
+        if (ret < 0) {
+            STATUS_NATIVE_SET(lsberrno);
+            SET_LSB_ERRMSG;
+            XSRETURN_EMPTY;	
+        } else {
+	    for(p = hosts; *p != NULL; p ++ ){
+            nhosts ++;
+	        XPUSHs(sv_2mortal(newSVpv(*p,0)));
+            }	
+        }
+        XSRETURN(nhosts);
+
+int
+do_launch(where, argv, userOptions)
+	char **where
+	char **argv
+	int userOptions
+    PREINIT:
+        int count = 0;
+        char **p;
+    CODE:
+        for (p = where; where && *p != NULL; p ++) count ++;
+        if (count == 0) where =NULL;
+        
+        for (p = argv; argv && *p != NULL; p ++) count ++;
+        if (count == 0) argv =NULL;
+        if ((RETVAL = lsb_launch(where, argv, userOptions, NULL)) < 0) {
+	        STATUS_NATIVE_SET(lsberrno);
+	        SET_LSB_ERRMSG;
+            RETVAL = 0;
+        }
+    OUTPUT:
+	RETVAL
+
+int
+lsb_removereservation (self, rvsid)
+	void * self
+	char * rvsid
+    CODE:
+    	if(lsb_removereservation(rvsid) <0) {
+    	    STATUS_NATIVE_SET(lsberrno);
+            SET_LSB_ERRMSG;
+            RETVAL = 0;
+        } else {
+	    RETVAL = 1;
+	}
+    OUTPUT:
+	RETVAL
+
+void
+lsb_reservationinfo (self, rvsid)
+	void * self
+	char * rvsid
+    PREINIT:
+    	struct rsvInfoEnt *res;
+    	int num;
+    	int j;
+    	SV *rv;
+	LSF_Batch_rsvInfoEnt *p;
+    PPCODE:
+    	if (strlen(rvsid) == 0) rvsid = NULL;
+    	res = lsb_reservationinfo(rvsid, &num, 0);
+    	
+    	if (lsberrno != LSBE_NO_ERROR) {
+    	    STATUS_NATIVE_SET(lsberrno);
+	    SET_LSB_ERRMSG;
+	    XSRETURN_EMPTY;	
+    	}
+        if (num == 0) {
+            XPUSHs(sv_2mortal(newSVnv(0)));
+            XSRETURN(1);
+        }	
+    	for (j = 0, p = res; j < num; j ++, p ++) {
+    	    rv = newRV_inc(&PL_sv_undef);
+	    sv_setref_iv(rv, "LSF::Batch::rsvInfoEntPtr", (IV)p);
+	     XPUSHs(sv_2mortal(rv));   	
+    	}
+    	XSRETURN(num);
+
+MODULE = LSF::Batch	PACKAGE = LSF::Batch::rsvInfoEntPtr PREFIX = rie_
+
+char *
+rie_options(self)
+	LSF_Batch_rsvInfoEnt *self
+    CODE:
+	if (self->options & RSV_OPTION_SYSTEM) {
+	    RETVAL = "sys";
+	} else if(self->options & RSV_OPTION_GROUP) {
+	    RETVAL = "group";
+	} else if(self->options & RSV_OPTION_USER) {
+	    RETVAL = "user";
+	} else {
+	    RETVAL = "-";
+	}
+    OUTPUT:
+	RETVAL
+
+char *
+rie_name(self)
+	LSF_Batch_rsvInfoEnt *self
+    CODE:
+	RETVAL = self->name;
+    OUTPUT:
+	RETVAL
+
+char *
+rie_rsvId(self)
+	LSF_Batch_rsvInfoEnt *self
+    CODE:
+	RETVAL = self->rsvId;
+    OUTPUT:
+	RETVAL
+	
+char *
+rie_timeWindow(self)
+	LSF_Batch_rsvInfoEnt *self
+    CODE:
+	RETVAL = self->timeWindow;
+    OUTPUT:
+	RETVAL
+	
+void
+rie_rsvHosts(self)
+	LSF_Batch_rsvInfoEnt *self
+    PREINIT:
+	int i;
+	SV *rv;
+    PPCODE:
+	for (i = 0; i < self->numRsvHosts; i ++) {
+	    rv = newRV_inc(&PL_sv_undef);
+	    sv_setref_iv(rv, "LSF::Batch::hostRsvInfoEntPtr", (IV)(self->rsvHosts+i));
+	    XPUSHs(sv_2mortal(rv));
+	}
+    	XSRETURN(self->numRsvHosts);
+
+void
+rie_jobIds(self)
+	LSF_Batch_rsvInfoEnt *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for (i = 0; i < self->numRsvJobs; i ++) {
+	    XPUSHs(sv_2mortal(newSViv(self->jobIds[i])));
+	}
+	XSRETURN(self->numRsvJobs);
+
+void
+rie_jobStatus(self)
+	LSF_Batch_rsvInfoEnt *self
+    PREINIT:
+	int i;
+    PPCODE:
+	for (i = 0; i < self->numRsvJobs; i ++) {
+	    XPUSHs(sv_2mortal(newSViv(self->jobStatus[i])));
+	}
+	XSRETURN(self->numRsvJobs);
+
+MODULE = LSF::Batch	PACKAGE = LSF::Batch::hostRsvInfoEntPtr PREFIX = hrie_
+
+char *
+hrie_host(self)
+	LSF_Batch_hostRsvInfoEnt *self
+    CODE:
+	RETVAL = self->host;
+    OUTPUT:
+	RETVAL
+
+int
+hrie_numCPUs(self)
+	LSF_Batch_hostRsvInfoEnt *self
+    CODE:
+	RETVAL = self->numCPUs;
+    OUTPUT:
+	RETVAL
+
+int
+hrie_numSlots(self)
+	LSF_Batch_hostRsvInfoEnt *self
+    CODE:
+	RETVAL = self->numSlots;
+    OUTPUT:
+	RETVAL
+
+int
+hrie_numRsvProcs(self)
+	LSF_Batch_hostRsvInfoEnt *self
+    CODE:
+	RETVAL = self->numRsvProcs;
+    OUTPUT:
+	RETVAL
+
+int
+hrie_numUsedProcs(self)
+	LSF_Batch_hostRsvInfoEnt *self
+    CODE:
+	RETVAL = self->numUsedProcs;
+    OUTPUT:
+	RETVAL
 
 MODULE = LSF::Batch	PACKAGE = LSF::Batch::hostInfoPtr	PREFIX = hi_
 
@@ -6186,7 +6781,7 @@ void
 hi_busySched(self)
 	LSF_Batch_hostInfo *self;
     PREINIT:
-  int i;
+        int i;
     PPCODE:
   	for( i = 0; i < self->nIdx; i++)
           XPUSHs(sv_2mortal(newSVnv(self->busySched[i])));	
@@ -6196,7 +6791,7 @@ void
 hi_busyStop(self)
 	LSF_Batch_hostInfo *self;
     PREINIT:
-  int i;
+	int i;
     PPCODE:
   	for( i = 0; i < self->nIdx; i++)
           XPUSHs(sv_2mortal(newSVnv(self->busyStop[i])));	
@@ -8701,6 +9296,37 @@ lsb_openjobinfo(self, job, jobname, user, queue, host, options)
     OUTPUT:
 	RETVAL
 
+LSF_Batch_jobInfoHead *
+lsb_openjobinfo_a(self,job,jobName,userName,queueName,hostName,options)
+	void          *self
+	LSF_Batch_job *job
+	char          *jobName
+	char          *userName
+	char          *queueName
+	char          *hostName
+	int           options
+    PREINIT:
+        LS_LONG_INT   jobId;
+    CODE:
+        if(job == NULL){
+            jobId =0;
+        }
+        else{
+            jobId = LSB_JOBID(job->jobId,job->arrayIdx);
+        }
+        if(strlen(jobName)==0) jobName =NULL;
+        if(strlen(userName)==0) userName = NULL;
+        if(strlen(queueName)==0) queueName = NULL;
+        if(strlen(hostName)==0) hostName = NULL;
+        RETVAL = lsb_openjobinfo_a(jobId,jobName,userName,queueName,hostName,options);
+	if(RETVAL == NULL){
+	    STATUS_NATIVE_SET(lsberrno);
+	    SET_LSB_ERRMSG;
+	    XSRETURN_UNDEF;
+	}
+   OUTPUT:
+        RETVAL
+        
 LSF_Batch_jobInfo *
 lsb_readjobinfo(self)
 	void *self;
@@ -8722,6 +9348,98 @@ lsb_closejobinfo(self)
 	void *self;
     CODE:
 	lsb_closejobinfo();
+
+
+MODULE = LSF::Batch     PACKAGE = LSF::Batch::jobInfoHeadPtr    PREFIX = head_
+
+int
+head_numJobs(self)
+	LSF_Batch_jobInfoHead  *self
+    CODE:
+        RETVAL = self ->numJobs;
+    OUTPUT:
+        RETVAL
+	
+void
+head_jobIds(self)
+	LSF_Batch_jobInfoHead   *self
+    PREINIT:
+        int i;
+    PPCODE:
+        for(i=0; i<self->numJobs; i++){
+            XPUSHs(sv_2mortal(newSViv(self-> jobIds [i])));
+        }
+        XSRETURN(self -> numJobs);
+
+int
+head_numHosts(self)
+	LSF_Batch_jobInfoHead   *self
+    CODE:
+        RETVAL = self ->numHosts;
+    OUTPUT:
+        RETVAL
+
+void
+head_hostNames(self)
+	LSF_Batch_jobInfoHead   *self
+    PREINIT:
+        int i;
+    PPCODE:
+        for(i=0; i<self->numHosts; i++){
+            XPUSHs(sv_2mortal(newSVpv(self->hostNames[i],0)));
+        }
+        XSRETURN(self -> numHosts);
+
+int
+head_numClusters(self)
+	LSF_Batch_jobInfoHead   *self
+    CODE:
+        RETVAL = self ->numClusters;
+    OUTPUT:
+        RETVAL
+
+void
+head_clusterNames(self)
+	LSF_Batch_jobInfoHead   *self
+    PREINIT:
+        int i;
+    PPCODE:
+        for(i=0; i< self->numClusters; i++){
+            XPUSHs(sv_2mortal(newSVpv(self->clusterNames[i],0)));
+        }
+        XSRETURN(self->numClusters);
+
+void 
+head_numRemoteHosts(self)
+	LSF_Batch_jobInfoHead   *self
+    PREINIT:
+        int i;
+    PPCODE:
+        for(i=0; i< (self->numClusters); i++){
+	    XPUSHs(sv_2mortal(newSViv(self->numRemoteHosts[i])));
+	}  
+       XSRETURN(self->numClusters);
+
+void
+head_remoteHosts(self)
+	LSF_Batch_jobInfoHead   *self
+    PREINIT:
+        int  *numReHosts;
+        int  i;
+        int  numClusters,p;
+        int  count=0;
+    PPCODE:
+        numReHosts = self -> numRemoteHosts;
+        numClusters = self -> numClusters;
+        for(p=0; p<numClusters; p++){
+            for(i=0; i<numReHosts[p]; i++){
+                XPUSHs(sv_2mortal(newSVpv(self->remoteHosts[p][i],0)));
+            }
+        }
+	for(p=0; p<numClusters; p++){
+	    count += self->numRemoteHosts[p]; 
+	}
+        XSRETURN(count);
 
 
 MODULE = LSF::Batch	PACKAGE = LSF::Batch::jobInfoPtr	PREFIX = ji_
@@ -8760,6 +9478,14 @@ ji_arrayIdx(self)
     OUTPUT:
 	RETVAL
 
+int                                    
+ji_numReasons(self)                    
+        LSF_Batch_jobInfo *self        
+    CODE:                              
+       RETVAL = self -> numReasons;    
+    OUTPUT:                            
+       RETVAL                          
+                                       
 char *
 ji_user(self)
 	LSF_Batch_jobInfo *self
@@ -9518,7 +10244,81 @@ do_modify(self, sub)
 	free_submit(s);
     OUTPUT:
         RETVAL 
+		
+void
+do_readjobmsg(self, r)
+	LSF_Batch_job *self;
+	HV *r;
+    PREINIT:
+    	SV *rv;
+    	int port;
+    	struct jobExternalMsgReply *reply;
+    	struct jobExternalMsgReq *req;
+		char * fileName = NULL;
+    PPCODE:
+    	req = (struct jobExternalMsgReq *)safemalloc(sizeof(struct jobExternalMsgReq));
+    	bzero(req, sizeof(struct jobExternalMsgReq));
+    	
+	reply = (struct jobExternalMsgReply *)safemalloc(sizeof(struct jobExternalMsgReply));
+    	bzero(reply, sizeof(struct jobExternalMsgReply));
+    	
+    	if (format_rjmreq(req, r, &fileName) < 0) {
+            free_rjmreq(req);
+            safefree(reply);
+            XSRETURN_EMPTY;
+    	}
+    	req->jobId = self->jobId;
+    	port = lsb_readjobmsg(req, reply);
+        free_rjmreq(req); 	
+	if (port > 0 && fileName != NULL && reply->dataSize > 0) {
+	    if (readfile(port, fileName, reply->dataSize) < 0) {
+	        STATUS_NATIVE_SET(lsberrno);
+	        SET_LSB_ERRMSG;
+	    }
+	}
+		
+    	if(port < 0) {
+	    STATUS_NATIVE_SET(lsberrno);
+	    SET_LSB_ERRMSG;
+	    XSRETURN_EMPTY;
+    	} else {
+	    XPUSHs(sv_2mortal(newSViv(port)));
+	    rv = newRV_inc(&PL_sv_undef);
+	    sv_setref_iv(rv, "LSF::Batch::jobExternalMsgReplyPtr",(IV)reply);
+	    XPUSHs(sv_2mortal(rv));
+    	}
+    	XSRETURN(2);
 
+int 
+do_postjobmsg(self, msgReq)
+	LSF_Batch_job *self
+	HV*   msgReq
+    PREINIT:
+        struct jobExternalMsgReq *s;
+        char *fileName = NULL;
+	LS_LONG_INT jobId;
+        int  err;
+    CODE:
+        s = (struct jobExternalMsgReq *)safemalloc(sizeof(struct jobExternalMsgReq));
+        initialize_jobExternalMsgReq(s);
+        s->jobId = self -> jobId;
+        if(format_jobExternalMsgReq(s,msgReq,&fileName) < 0 ){
+            RETVAL = 0;
+        } else {
+            err = lsb_postjobmsg(s,fileName);
+	    if(err == -1){
+	        STATUS_NATIVE_SET(lsberrno);
+	        SET_LSF_ERRMSG;
+	        RETVAL = 0;
+	    }else {
+	        RETVAL = 1;
+	    }
+	}
+	safefree(s);
+    OUTPUT:
+        RETVAL
+
+    	
 int
 job_jobId(self)
         LSF_Batch_job *self
@@ -9709,8 +10509,76 @@ job_switch(self, queue)
     OUTPUT:
 	RETVAL
 
+MODULE = LSF::Batch     PACKAGE = LSF::Batch    PREFIX = lsb_
 
-MODULE = LSF::Batch	PACKAGE = LSF::Batch	PREFIX = lsb_
+char*
+lsb_suspreason(self,reasons,subreasons,loadIndex)
+	void *self
+	int reasons
+	int subreasons
+	char **loadIndex
+    PREINIT:
+	char **h;
+	int  count =0;
+	struct loadIndexLog *s;
+    CODE:
+	for( h = loadIndex; loadIndex && *h; h++ ) count++;
+	s = (struct loadIndexLog *)safemalloc (sizeof (struct loadIndexLog));
+	s->nIdx = count;
+	s->name = loadIndex;
+	RETVAL = lsb_suspreason(reasons,subreasons,s);
+	safefree(s);
+    OUTPUT:	
+	RETVAL
+
+char *
+lsb_pendreason(self,numReason,rsTb,jInfoH,loadIndex,clusterId)
+	void     *self
+	AV      *rsTb
+	LSF_Batch_jobInfoHead *jInfoH
+	char     **loadIndex
+	int      clusterId
+	int      numReason
+    PREINIT:
+	char **h;
+	int  count =0;
+	struct loadIndexLog *s;
+	int *cc;
+	I32   len;  
+	int   *temp = NULL;
+	int   i;
+	SV    *element;
+    CODE:
+        len = av_len(rsTb);
+        if(len < 0){
+            STATUS_NATIVE_SET(errno);
+            SET_LSB_ERRMSG_TO("Reason table is empty.");
+            XSRETURN_UNDEF;
+        }
+        temp = (int *)safemalloc((len+1) * sizeof(int));
+        if(temp == NULL){
+	    STATUS_NATIVE_SET(errno);
+	    SET_LSB_ERRMSG_TO("Unable to allocate memory for reason Table.");
+	    XSRETURN_UNDEF;
+        }
+        for(i=0; i<=len; i++){
+            element = av_shift(rsTb);
+            if(!SvIOK(element)){
+                break;
+	    }
+            else{
+                    temp[i] = SvIV(element);
+            }
+        }   
+        for( h = loadIndex; loadIndex && *h; h++ ) count++;
+        s = (struct loadIndexLog *)safemalloc (sizeof (struct loadIndexLog));
+        s->nIdx = count;
+        s->name = loadIndex;
+        RETVAL = lsb_pendreason(numReason, temp, jInfoH, s, clusterId);
+        safefree(temp);
+        safefree(s);
+    OUTPUT:
+        RETVAL
 
 void
 lsb_sharedresourceinfo(self, resources, hostName, option)
@@ -13871,3 +14739,171 @@ apsl_longName(self)
         RETVAL = self->longName;
     OUTPUT:
 	RETVAL
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jobExternalMsgReplyPtr PREFIX = jemr_
+
+int 
+jemr_jobId(self)
+	LSF_Batch_jobExternalMsgReply *self
+    CODE:
+    	RETVAL = LSB_ARRAY_JOBID(self->jobId);
+    OUTPUT:
+	RETVAL
+
+int
+jemr_msgIdx(self)
+	LSF_Batch_jobExternalMsgReply *self
+    CODE:
+    	RETVAL = self->msgIdx;
+    OUTPUT:
+	RETVAL
+
+char *
+jemr_desc(self)
+	LSF_Batch_jobExternalMsgReply *self
+    CODE:
+    	RETVAL = self->desc;
+    OUTPUT:
+	RETVAL
+	
+int
+jemr_dataSize(self)
+	LSF_Batch_jobExternalMsgReply *self
+    CODE:
+    	RETVAL = self->dataSize;
+    OUTPUT:
+	RETVAL
+	
+time_t 
+jemr_postTime(self)
+	LSF_Batch_jobExternalMsgReply *self
+    CODE:
+    	RETVAL = self->postTime;
+    OUTPUT:
+	RETVAL
+	
+int 
+jemr_dataStatus(self)
+	LSF_Batch_jobExternalMsgReply *self
+    CODE:
+    	RETVAL = self->dataStatus;
+    OUTPUT:
+	RETVAL
+	
+char *
+jemr_userName(self)
+    	LSF_Batch_jobExternalMsgReply *self
+    CODE:
+    	RETVAL = self->userName;
+    OUTPUT:
+	RETVAL	
+
+MODULE = LSF::Batch PACKAGE = LSF::Batch::jRusagePtr PREFIX = jru_
+
+int
+jru_mem(self)
+	LSF_Batch_jRusage *self
+    CODE:
+    	RETVAL = self->mem;
+    OUTPUT:
+    	RETVAL
+
+int
+jru_swap(self)
+	LSF_Batch_jRusage *self
+    CODE:
+    	RETVAL = self->swap;
+    OUTPUT:
+    	RETVAL
+
+int
+jru_utime(self)
+	LSF_Batch_jRusage *self
+    CODE:
+    	RETVAL = self->utime;
+    OUTPUT:
+    	RETVAL
+
+int
+jru_stime(self)
+	LSF_Batch_jRusage *self
+    CODE:
+    	RETVAL = self->stime;
+    OUTPUT:
+    	RETVAL
+
+int
+jru_npids(self)
+	LSF_Batch_jRusage *self
+    CODE:
+    	RETVAL = self->npids;
+    OUTPUT:
+    	RETVAL
+
+void
+jru_pidInfo(self)
+	LSF_Batch_jRusage *self
+    PREINIT:
+    	int num = 0;
+    	SV *rv;
+	LSF_Batch_pidInfo *p;
+    PPCODE:
+    	for (num = 0, p = self->pidInfo; num < self->npids; num ++, p ++) {
+    	    rv = newRV_inc(&PL_sv_undef);
+	    sv_setref_iv(rv, "LSF::Batch::pidInfoPtr",(IV)p);
+	    XPUSHs(sv_2mortal(rv));
+    	}
+	XSRETURN(self->npids);
+
+void
+jru_pgids(self)
+	LSF_Batch_jRusage *self
+    PREINIT:
+    	int num = 0;
+    PPCODE:
+    	for (num = 0; num < self->npgids; num ++) {
+	    XPUSHs(sv_2mortal(newSVnv(self->pgid[num])));
+    	}
+	XSRETURN(self->npgids);
+
+int
+jru_nthreads(self)
+	LSF_Batch_jRusage *self
+    CODE:
+    	RETVAL = self->nthreads;
+    OUTPUT:
+    	RETVAL
+    	
+MODULE = LSF::Batch PACKAGE = LSF::Batch::pidInfoPtr PREFIX = pi_
+
+int
+pi_pid(self)
+	LSF_Batch_pidInfo *self
+    CODE:
+    	RETVAL = self->pid;
+    OUTPUT:
+    	RETVAL
+
+int
+pi_ppid(self)
+	LSF_Batch_pidInfo *self
+    CODE:
+    	RETVAL = self->ppid;
+    OUTPUT:
+    	RETVAL
+    
+int
+pi_pgid(self)
+	LSF_Batch_pidInfo *self
+    CODE:
+    	RETVAL = self->pgid;
+    OUTPUT:
+    	RETVAL
+    	
+int
+pi_jobid(self)
+	LSF_Batch_pidInfo *self
+    CODE:
+    	RETVAL = self->jobid;
+    OUTPUT:
+    	RETVAL
